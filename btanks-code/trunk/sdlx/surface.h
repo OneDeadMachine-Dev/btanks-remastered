@@ -64,13 +64,14 @@ namespace sdlx {
 
 		inline void *get_pixels() const {return surface->pixels;}
 
-		inline const int get_width() const { return surface->w; }
-		inline const int get_height() const { return surface->h; }
+		//dimensions of the virtual screen come from the logical render size
+		const int get_width() const;
+		const int get_height() const;
 		inline const int getPitch() const { return surface->pitch; }
 		inline const int getBPP() const { return SDL_BITSPERPIXEL(surface->format); }
 		inline const Uint32 getFlags() const { return 0; }
 
-		inline const Rect get_size() const { return Rect(0, 0, surface->w, surface->h); }
+		const Rect get_size() const;
 
 		void create_rgb(int width, int height, int depth, Uint32 flags = Default);
 		void create_rgb_from(void *pixels, int width, int height, int depth, int pitch = -1);
@@ -130,6 +131,9 @@ namespace sdlx {
 
 		void free();
 
+		//invalidate the cached GPU texture after direct pixel changes
+		void mark_dirty() const;
+
 		void lock() const;
 		void unlock() const;
 
@@ -151,7 +155,13 @@ namespace sdlx {
 		Surface(const Surface &x);
 		const Surface& operator=(const Surface &x);
 		SDL_Surface *surface;
+		Uint8 _alpha;
+		SDL_BlendMode _blend;
 		static int default_flags;
+
+		static SDL_Texture *get_texture(const Surface &src);
+		static void apply_texture_state(SDL_Texture *t, const Surface &src);
+		static void destroy_texture(SDL_Surface *key);
 	};
 }
 

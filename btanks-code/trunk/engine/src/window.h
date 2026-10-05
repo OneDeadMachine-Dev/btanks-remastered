@@ -75,6 +75,7 @@ private:
 	int _fsaa;
 	bool _init_joystick;
 	bool _fullscreen, _vsync, _running;
+	bool _explicit_size;
 #ifdef _WINDOWS
 	bool _dx;
 #else 

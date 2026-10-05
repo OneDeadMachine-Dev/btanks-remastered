@@ -132,6 +132,7 @@ void IWindow::init(const int argc, char *argv[]) {
 	_force_soft = false;
 
 	bool force_gl = false;
+	_explicit_size = false;
 	Config->get("engine.window.width", _w, 800);
 	Config->get("engine.window.height", _h, 600);
 	Config->get("engine.window.fullscreen", _fullscreen, false);
@@ -141,12 +142,12 @@ void IWindow::init(const int argc, char *argv[]) {
 		else if (strcmp(argv[i], "--vsync") == 0) _vsync = true;
 		//else if (strcmp(argv[i], "--320x200") == 0) { _w = 320; _h = 200; }
 		//else if (strcmp(argv[i], "--320x240") == 0) { _w = 320; _h = 240; }
-		else if (strcmp(argv[i], "-0") == 0) { _w = 640; _h = 480; }
-		else if (strcmp(argv[i], "-1") == 0) { _w = 800; _h = 600; }
-		else if (strcmp(argv[i], "-2") == 0) { _w = 1024; _h = 768; }
-		else if (strcmp(argv[i], "-3") == 0) { _w = 1152; _h = 864; }
-		else if (strcmp(argv[i], "-4") == 0) { _w = 1280; _h = 1024; }
-		else if (strcmp(argv[i], "-5") == 0) { _w = 1920; _h = 1080; }
+		else if (strcmp(argv[i], "-0") == 0) { _w = 640; _h = 480; _explicit_size = true; }
+		else if (strcmp(argv[i], "-1") == 0) { _w = 800; _h = 600; _explicit_size = true; }
+		else if (strcmp(argv[i], "-2") == 0) { _w = 1024; _h = 768; _explicit_size = true; }
+		else if (strcmp(argv[i], "-3") == 0) { _w = 1152; _h = 864; _explicit_size = true; }
+		else if (strcmp(argv[i], "-4") == 0) { _w = 1280; _h = 1024; _explicit_size = true; }
+		else if (strcmp(argv[i], "-5") == 0) { _w = 1920; _h = 1080; _explicit_size = true; }
 		else if (strcmp(argv[i], "--fsaa") == 0) { _fsaa = (_fsaa)?(_fsaa<< 1) : 1; }
 		else if (strcmp(argv[i], "--no-joystick") == 0) { _init_joystick = false; }
 		else if (strcmp(argv[i], "--help") == 0) {
@@ -212,6 +213,13 @@ void IWindow::createMainWindow() {
 	if (_vsync)
 		SDL_SetRenderVSync(sdlx::Surface::get_renderer(), 1);
 
+	//in fullscreen keep the game's virtual resolution at the classic 800x600
+	//(big UI, crisp GPU scaling) unless a resolution switch was given
+	if (_fullscreen && !_explicit_size) {
+		_w = 800;
+		_h = 600;
+	}
+
 	TRY {
 		_window.set_video_mode(_w, _h, 0, flags);
 	} CATCH("setting video mode", {
@@ -219,6 +227,11 @@ void IWindow::createMainWindow() {
 		_w = 800; _h = 600;
 		_window.set_video_mode(_w, _h, 0, 0);
 	});
+
+	if (_fullscreen && sdlx::Surface::get_window() != NULL) {
+		//desktop resolution: the GPU letterboxes the virtual size to fit
+		SDL_SetWindowFullscreenMode(sdlx::Surface::get_window(), NULL);
+	}
 
 	sdlx::Surface::set_window_title("Battle tanks - " + getVersion());
 	LOG_DEBUG(("created main surface. (%dx%dx%d, renderer: %s)", _w, _h, _window.getBPP(), SDL_GetRendererName(sdlx::Surface::get_renderer())));
