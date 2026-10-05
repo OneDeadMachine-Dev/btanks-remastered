@@ -189,7 +189,10 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 		_renderer = SDL_CreateRenderer(_window, "software");
 	if (_renderer == NULL)
 		throw_sdl(("SDL_CreateRenderer"));
-	SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_BLEND);
+	//SDL1.2 semantics: FillRect is always opaque (alpha is ignored), so the
+	//per-frame background clear actually replaces the previous frame. render
+	//primitives keep blend mode NONE on purpose.
+	SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
 
 	//virtual coordinate space: the game logic always works in wxh, whatever
 	//the real window size is (free HD scaling on the GPU)
@@ -501,6 +504,12 @@ void Surface::reset_clip_rect() {
 }
 void Surface::get_clip_rect(sdlx::Rect &rect) {
 	if (surface == _screen_surface) {
+		//SDL1.2: a fresh surface clips to the full surface. SDL3 reports a
+		//disabled clip as an empty rect - return the logical size instead.
+		if (!SDL_RenderClipEnabled(_renderer)) {
+			rect = sdlx::Rect(0, 0, _logical_w, _logical_h);
+			return;
+		}
 		SDL_Rect r = { 0, 0, 0, 0 };
 		SDL_GetRenderClipRect(_renderer, &r);
 		rect = sdlx::Rect(r.x, r.y, r.w, r.h);
