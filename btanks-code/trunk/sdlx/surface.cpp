@@ -195,10 +195,22 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
 
 	//virtual coordinate space: the game logic always works in wxh, whatever
-	//the real window size is (free HD scaling on the GPU)
+	//the real window size is (free HD scaling on the GPU). in fullscreen the
+	//virtual width follows the display aspect (600px-high widescreen, classic
+	//remaster style): no letterbox bars, more map visible.
 	_logical_w = w;
 	_logical_h = h;
-	SDL_SetRenderLogicalPresentation(_renderer, w, h, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+	if ((flags & Fullscreen) == Fullscreen) {
+		int pw = 0, ph = 0;
+		SDL_GetWindowSizeInPixels(_window, &pw, &ph);
+		if (pw > 0 && ph > 0) {
+			int lw = (int)(h * ((float)pw / ph)) & ~1;
+			if (lw < 640) lw = 640;
+			if (lw > 2048) lw = 2048;
+			_logical_w = lw;
+		}
+	}
+	SDL_SetRenderLogicalPresentation(_renderer, _logical_w, _logical_h, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
 	//1x1 holder: identifies the screen surface and provides map_rgb format
 	surface = SDL_CreateSurface(1, 1, SDL_PIXELFORMAT_ARGB8888);

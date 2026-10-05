@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Battle Tanks</string>
+	<key>CFBundleDisplayName</key>
+	<string>Battle Tanks</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.btanks.remastered</string>
+	<key>CFBundleVersion</key>
+	<string>0.9.8098</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.9.8098 Remastered</string>
+	<key>CFBundleExecutable</key>
+	<string>btanks-launcher</string>
+	<key>CFBundleIconFile</key>
+	<string>btanks</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>12.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.games</string>
+</dict>
+</plist>
