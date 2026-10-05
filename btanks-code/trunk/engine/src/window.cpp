@@ -240,6 +240,17 @@ void IWindow::run() {
 		//events so the engine's SDL1.2-style keysym.unicode keeps working
 		int n = 0;
 		while (n < (int)(sizeof(events)/sizeof(events[0])) && SDL_PollEvent(&events[n])) {
+			//mouse events arrive in window coordinates: map them into the
+			//renderer's logical (game) coordinate space
+			switch(events[n].type) {
+			case SDL_EVENT_MOUSE_MOTION:
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+			case SDL_EVENT_MOUSE_WHEEL:
+				SDL_ConvertEventToRenderCoordinates(sdlx::Surface::get_renderer(), &events[n]);
+			break;
+			default: break;
+			}
 			++n;
 		}
 
