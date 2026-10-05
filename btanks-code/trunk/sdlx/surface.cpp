@@ -176,7 +176,9 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 
 	destroy_screen();
 
-	Uint32 wflags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+	//not resizable: the game picks fixed modes (or fullscreen) like in 2006;
+	//live resize desyncs the virtual canvas and its layouts
+	Uint32 wflags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	if ((flags & Fullscreen) == Fullscreen)
 		wflags |= SDL_WINDOW_FULLSCREEN;
 
@@ -219,6 +221,16 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	if (surface == NULL)
 		throw_sdl(("SDL_CreateSurface(1x1)"));
 	_screen_surface = surface;
+
+	//wipe the freshly created output once so no display garbage shows before
+	//the first frame (must not be done per-frame: SDL3 applies the logical
+	//transform at RenderPresent, a late fill would cover the frame)
+	SDL_SetRenderLogicalPresentation(_renderer, 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED);
+	SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
+	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+	SDL_RenderFillRect(_renderer, NULL);
+	SDL_RenderPresent(_renderer);
+	SDL_SetRenderLogicalPresentation(_renderer, _logical_w, _logical_h, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 }
 
 
