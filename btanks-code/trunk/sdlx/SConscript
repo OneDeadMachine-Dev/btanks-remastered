@@ -12,43 +12,18 @@ env.Append(CPPDEFINES=['SDLXAPI=DLLEXPORT'])
 
 env.MergeFlags(sdl_cflags, sdl_libs)
 
-libs = ['mrt', 'SDL', 'SDL_image']
+libs = ['mrt', 'SDL3', 'SDL3_image']
 
-if sys.platform != "win32":
-	c_map_env= env.Clone()
-	#c_map_env.Append(CXXFLAGS=['-fforce-addr', '-fprefetch-loop-arrays'])
-	c_map = c_map_env.SharedObject('c_map.cpp')
-	if sys.platform == 'darwin':
-		env.Append(LINKFLAGS=['-framework', 'OpenGL'])
-	else:
-		libs.append('rt')
-		libs.append('X11')
-
-	env.Append(LINKFLAGS=['-Wl,-rpath,'+ lib_dir])
-else: 
-	c_map = env.SharedObject('c_map.cpp')
-	libs.append('opengl32')
-	libs.append('winmm')
-	libs.append('user32')
-	libs.append('gdi32')
-	libs.append('advapi32')
+c_map_env= env.Clone()
+c_map = c_map_env.SharedObject('c_map.cpp')
 
 sdlx_sources = 	['cursor.cpp', 'sdl_ex.cpp', 'surface.cpp', 'system.cpp', 'joystick.cpp',
 	'thread.cpp', 'mutex.cpp', 'semaphore.cpp', 'color.cpp',
-	c_map, 'font.cpp', 'timer.cpp', 'module.cpp', 'file_rw.cpp', 
-	'gfx/SDL_rotozoom.c', 
-	] #  'ttf.cpp', 
+	c_map, 'font.cpp', 'timer.cpp', 'module.cpp', 'file_rw.cpp',
+	'gfx/SDL_rotozoom.c',
+	] #  'ttf.cpp',
 
-if sys.platform == 'win32': 
-	sdlx_sources.append('wrappers/d3dsdl8.cpp')
-	env.Append(CPPPATH=[os.environ['DXSDK_DIR'] + '\\Include'])
-	env.Append(LIBPATH=[os.environ['DXSDK_DIR'] + '\\Lib'])
-	#libs.append('d3dx8')
-	#libs.append('d3dx9')
-	libs.append('d3d8')
-	libs.append('d3dx8')
-else: 
-	sdlx_sources.append('wrappers/glSDL.c')
+
 
 sdlx = env.SharedLibrary('sdlx', sdlx_sources, LIBS=libs)
 Import('debug')

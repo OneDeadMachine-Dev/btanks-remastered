@@ -1,4 +1,5 @@
 #include "shop.h"
+#include "sdlx/keysym.h"
 #include "config.h"
 #include "box.h"
 #include "campaign.h"

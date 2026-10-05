@@ -36,7 +36,7 @@ Module::Module() : handle(NULL) {}
 
 void Module::load(const std::string &name) {
 	unload();
-	handle = SDL_LoadObject(name.c_str());
+	handle = (void *)SDL_LoadObject(name.c_str());
 	if (handle == NULL)
 		throw_sdl(("SDL_LoadObject('%s')", name.c_str()));
 }
@@ -44,13 +44,13 @@ void Module::load(const std::string &name) {
 void *Module::sym(const std::string &name) const {
 	if (handle == NULL)
 		return NULL;
-	return SDL_LoadFunction(handle, name.c_str());
+	return (void *)SDL_LoadFunction((SDL_SharedObject *)handle, name.c_str());
 }
 
 void Module::unload() {
 	if (handle == NULL)
 		return;
-	SDL_UnloadObject(handle);
+	SDL_UnloadObject((SDL_SharedObject *)handle);
 	handle = NULL;
 }
 

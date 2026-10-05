@@ -17,8 +17,8 @@
 */
 
 
-#include <SDL.h>
-#include <SDL_audio.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_audio.h>
 #include "context.h"
 #include <string.h>
 #include "sdl_ex.h"
@@ -36,17 +36,21 @@
 
 using namespace clunk;
 
+SDL_AudioStream *Context::_audio_stream = NULL;
+
 Context::Context() : period_size(0), listener(NULL), max_sources(8), fx_volume(1), distance_model(DistanceModel::Inverse, true, 128), fdump(NULL) {
 }
 
-void Context::callback(void *userdata, Uint8 *bstream, int len) {
-	Context *self = (Context *)userdata;
-	assert(self != NULL);
-	Sint16 *stream = (Sint16*)bstream;
-	TRY {
-		self->process(stream, len);
-	} CATCH("callback", {})
+void Context::stream_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int) {
+	if (additional_amount <= 0)
+		return;
+	clunk::Buffer buf;
+	buf.set_size(additional_amount);
+	Context * self = (Context *)userdata;
+	self->process((Sint16 *)buf.get_ptr(), additional_amount);
+	SDL_PutAudioStreamData(stream, buf.get_ptr(), additional_amount);
 }
+
 
 template<class Sources>
 bool Context::process_object(Object *o, Sources &sset, std::vector<source_t> &lsources, unsigned n) {
@@ -146,8 +150,11 @@ void Context::process(Sint16 *stream, int size) {
 		if (buf_size >= size)
 			buf_size = size;
 
-		int sdl_v = (int)floor(SDL_MIX_MAXVOLUME * stream_info.gain + 0.5f);
-		SDL_MixAudio((Uint8 *)stream, (Uint8 *)stream_info.buffer.get_ptr(), buf_size, sdl_v);
+		float v = stream_info.gain;
+		if (v > 1.0f)
+			v = 1.0f;
+		if (v > 0.0f)
+			SDL_MixAudio((Uint8 *)stream, (const Uint8 *)stream_info.buffer.get_ptr(), SDL_AUDIO_S16LE, buf_size, v);
 		
 		if ((int)stream_info.buffer.get_size() > size) {
 			memmove(stream_info.buffer.get_ptr(), ((Uint8 *)stream_info.buffer.get_ptr()) + size, stream_info.buffer.get_size() - size);
@@ -174,19 +181,17 @@ void Context::process(Sint16 *stream, int size) {
 		}
 
 		float volume = fx_volume * distance_model.gain(source_info.s_pos.length());
-		int sdl_v = (int)floor(SDL_MIX_MAXVOLUME * volume + 0.5f);
-		if (sdl_v <= 0)
+		if (volume <= 0.0f)
 			continue;
 		//check for 0
 		volume = source->_process(buf, spec.channels, source_info.s_pos, source_info.s_dir, volume, dpitch);
-		sdl_v = (int)floor(SDL_MIX_MAXVOLUME * volume + 0.5f);
-		//LOG_DEBUG(("%u: mixing source with volume %g (%d)", i, volume, sdl_v));
-		if (sdl_v <= 0)
+		//LOG_DEBUG(("%u: mixing source with volume %g", i, volume));
+		if (volume <= 0.0f)
 			continue;
-		if (sdl_v > SDL_MIX_MAXVOLUME)
-			sdl_v = SDL_MIX_MAXVOLUME;
-		
-		SDL_MixAudio((Uint8 *)stream, (Uint8 *)buf.get_ptr(), size, sdl_v);
+		if (volume > 1.0f)
+			volume = 1.0f;
+
+		SDL_MixAudio((Uint8 *)stream, (const Uint8 *)buf.get_ptr(), SDL_AUDIO_S16LE, size, volume);
 	}
 	
 	if (fdump != NULL) {
@@ -223,32 +228,30 @@ void Context::save(const std::string &file) {
 }
 
 void Context::init(const int sample_rate, const Uint8 channels, int period_size) {
-	if (!SDL_WasInit(SDL_INIT_AUDIO)) {
-		if (SDL_InitSubSystem(SDL_INIT_AUDIO) == -1)
+	if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO)) {
+		if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
 			throw_sdl(("SDL_InitSubSystem"));
 	}
-	
-	SDL_AudioSpec src;
-	memset(&src, 0, sizeof(src));
-	src.freq = sample_rate;
-	src.channels = channels;
-	src.format = AUDIO_S16SYS;
-	src.samples = period_size;
-	src.callback = &Context::callback;
-	src.userdata = (void *) this;
-	
+
+	SDL_AudioSpec want;
+	SDL_zero(want);
+	want.freq = sample_rate;
+	want.channels = channels;
+	want.format = SDL_AUDIO_S16LE;
+
 	this->period_size = period_size;
-	
-	if ( SDL_OpenAudio(&src, &spec) < 0 )
-		throw_sdl(("SDL_OpenAudio(%d, %u, %d)", sample_rate, channels, period_size));
-	if (spec.format != AUDIO_S16SYS)
-		throw_ex(("SDL_OpenAudio(%d, %u, %d) returned format %d", sample_rate, channels, period_size, spec.format));
+
+	_audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &want, &Context::stream_callback, (void *) this);
+	if (_audio_stream == NULL)
+		throw_sdl(("SDL_OpenAudioDeviceStream(%d, %u, %d)", sample_rate, channels, period_size));
+
+	spec = want;
 	if (spec.channels < 2)
 		LOG_ERROR(("Could not operate on %d channels", spec.channels));
 
-	LOG_DEBUG(("opened audio device, sample rate: %d, period: %d, channels: %d", spec.freq, spec.samples, spec.channels));
-	SDL_PauseAudio(0);
-	
+	LOG_DEBUG(("opened audio device, sample rate: %d, period: %d, channels: %d", spec.freq, period_size, spec.channels));
+	SDL_ResumeAudioStreamDevice(_audio_stream);
+
 	AudioLocker l;
 	listener = create_object();
 }
@@ -262,14 +265,20 @@ void Context::delete_object(Object *o) {
 
 void Context::deinit() {
 	//cleanup objects here too.
-	if (!SDL_WasInit(SDL_INIT_AUDIO))
+	if (!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO))
 		return;
-	
-	AudioLocker l;
-	delete listener;
-	listener = NULL;
-	SDL_CloseAudio();
-	
+
+	{
+		AudioLocker l;
+		delete listener;
+		listener = NULL;
+	}
+
+	if (_audio_stream != NULL) {
+		SDL_DestroyAudioStream(_audio_stream);
+		_audio_stream = NULL;
+	}
+
 	if (fdump != NULL) {
 		fclose(fdump);
 		fdump = NULL;
@@ -361,22 +370,30 @@ void Context::set_max_sources(int sources) {
 }
 
 void Context::convert(clunk::Buffer &dst, const clunk::Buffer &src, int rate, const Uint16 format, const Uint8 channels) {
-	SDL_AudioCVT cvt;
-	memset(&cvt, 0, sizeof(cvt));
-	if (SDL_BuildAudioCVT(&cvt, format, channels, rate, spec.format, channels, spec.freq) == -1) {
-		throw_sdl(("DL_BuildAudioCVT(%d, %04x, %u)", rate, format, channels));
-	}
-	size_t buf_size = (size_t)(src.get_size() * cvt.len_mult);
-	cvt.buf = (Uint8 *)malloc(buf_size);
-	cvt.len = (int)src.get_size();
+	SDL_AudioSpec src_spec;
+	SDL_zero(src_spec);
+	src_spec.format = (SDL_AudioFormat)format;
+	src_spec.channels = channels;
+	src_spec.freq = rate;
 
-	assert(buf_size >= src.get_size());
-	memcpy(cvt.buf, src.get_ptr(), src.get_size());
+	SDL_AudioStream *stream = SDL_CreateAudioStream(&src_spec, &spec);
+	if (stream == NULL)
+		throw_sdl(("SDL_CreateAudioStream(%d, %04x, %u)", rate, format, channels));
 
-	if (SDL_ConvertAudio(&cvt) == -1) 
-		throw_sdl(("SDL_ConvertAudio"));
+	if (!SDL_PutAudioStreamData(stream, src.get_ptr(), (int)src.get_size()))
+		throw_sdl(("SDL_PutAudioStreamData"));
+	if (!SDL_FlushAudioStream(stream))
+		throw_sdl(("SDL_FlushAudioStream"));
 
-	dst.set_data(cvt.buf, (size_t)(cvt.len * cvt.len_ratio), true);
+	int avail = SDL_GetAudioStreamAvailable(stream);
+	if (avail < 0)
+		throw_sdl(("SDL_GetAudioStreamAvailable"));
+
+	dst.set_size((size_t)avail);
+	if (avail > 0 && !SDL_GetAudioStreamData(stream, dst.get_ptr(), avail))
+		throw_sdl(("SDL_GetAudioStreamData"));
+
+	SDL_DestroyAudioStream(stream);
 }
 
 /*!
@@ -411,7 +428,7 @@ void Context::convert(clunk::Buffer &dst, const clunk::Buffer &src, int rate, co
 	clunk::Buffer data; //placeholder for a memory chunk
 	//decode ogg sample into data
 	clunk::Sample *sample = Context->create_sample();
-	sample->init(data, ogg_rate, AUDIO_S16LSB, ogg_channels);
+	sample->init(data, ogg_rate, SDL_AUDIO_S16LE, ogg_channels);
 	\endcode
 	
 	So all audio data were loaded and initialized. Next step is to allocate objects. Clunk was designed to be easily integrated into programs. 
@@ -475,7 +492,7 @@ void Context::convert(clunk::Buffer &dst, const clunk::Buffer &src, int rate, co
 				//store music parameters into members : 
 				sample_rate = music_rate;
 				channels = music_channels;
-				format = AUDIO_S16LSB; 
+				format = SDL_AUDIO_S16LE; 
 				//this values here are only for educational purpose. Don't forget to fill it with actual values from the music file!
 			}
 			

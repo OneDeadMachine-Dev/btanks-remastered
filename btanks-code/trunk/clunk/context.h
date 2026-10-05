@@ -24,7 +24,7 @@
 #include <deque>
 #include <vector>
 #include <stdio.h>
-#include <SDL_audio.h>
+#include <SDL3/SDL_audio.h>
 
 #include "export_clunk.h"
 #include "object.h"
@@ -135,11 +135,16 @@ public:
 	inline void set_distance_model(const DistanceModel &model) { distance_model = model; }
 	DistanceModel &get_distance_model() { return distance_model; }
 
-private: 
+private:
 	SDL_AudioSpec spec;
 	int period_size;
+	static SDL_AudioStream *_audio_stream;
 
-	static void callback(void *userdata, Uint8 *stream, int len);
+public:
+	static SDL_AudioStream *get_audio_stream() { return _audio_stream; }
+
+private:
+	static void SDLCALL stream_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
 	void delete_object(Object *o);
 
 	friend clunk::Object::~Object();

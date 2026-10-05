@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "cheater.h"
+#include "sdlx/keysym.h"
 #include "window.h"
 #include <string.h>
 #include <assert.h>
@@ -33,8 +34,8 @@
 
 Cheater::Cheater() : _buf_size(0) {
 	memset(_buf, 0, sizeof(_buf));
-	
-	on_event_slot.assign(this, &Cheater::onEvent, Window->event_signal);
+
+	on_event_slot.assign(this, &Cheater::onKey, Window->key_signal);
 	
 	_cheats.push_back("skotobaza");
 	_cheats.push_back("matrix");
@@ -58,15 +59,9 @@ Cheater::Cheater() : _buf_size(0) {
 #include "player_manager.h"
 #include "player_slot.h"
 
-void Cheater::onEvent(const SDL_Event &event) {
-	if (event.type != SDL_KEYDOWN)
-		return;
-	
-	const SDL_keysym &sym = event.key.keysym;
-	const bool pressed = event.type == SDL_KEYDOWN;
-	
+bool Cheater::onKey(const SDL_keysym sym, const bool pressed) {
 	if (!pressed)
-		return;
+		return true;
 	
 	size_t n = sizeof(_buf)/sizeof(_buf[0]);
 	
@@ -89,7 +84,7 @@ void Cheater::onEvent(const SDL_Event &event) {
 		}
 	}
 	if (cheat.empty())
-		return;
+		return true;
 
 	if (cheat == "skotobaza") {
 		/* SECRET ATATAT MODE !! */
@@ -113,5 +108,5 @@ void Cheater::onEvent(const SDL_Event &event) {
 		o->impassability = (o->impassability > 0)?0:1;		
 	} CATCH("activating cheat", {})
 	}
-	return;
+	return true;
 }

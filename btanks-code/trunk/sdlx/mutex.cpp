@@ -39,15 +39,13 @@ Mutex::~Mutex() {
 void Mutex::lock() const {
 	if (_mutex == NULL)
 		throw_ex(("lock() called on uninitialized mutex"));
-	if (SDL_mutexP(_mutex) != 0)
-		throw_sdl(("SDL_LockMutex"));
+	SDL_LockMutex(_mutex);
 }
 
 void Mutex::unlock() const {
 	if (_mutex == NULL)
 		throw_ex(("unlock() called on uninitialized mutex"));
-	if (SDL_mutexV(_mutex) != 0)
-		throw_sdl(("SDL_UnlockMutex"));
+	SDL_UnlockMutex(_mutex);
 }
 
 

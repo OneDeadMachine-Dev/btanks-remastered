@@ -20,18 +20,23 @@
 #include "sdlx.h"
 
 const bool sdlx::Cursor::enabled() {
-    return SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE;
+    return SDL_CursorVisible();
 }
 void sdlx::Cursor::Disable() {
-    SDL_ShowCursor(SDL_DISABLE);
+    SDL_ShowCursor();
 }
 void sdlx::Cursor::Enable() {
-    SDL_ShowCursor(SDL_ENABLE);
+    SDL_ShowCursor();
 }
 
 void sdlx::Cursor::set_position(const int x, const int y) {
-    SDL_WarpMouse(x, y);
+    SDL_Window *w = SDL_GetMouseFocus();
+	if (w != NULL)
+		SDL_WarpMouseInWindow(w, (float)x, (float)y);
 }
 void sdlx::Cursor::get_position(int &x, int &y) {
-	SDL_GetMouseState(&x, &y);
+	float fx = 0.0f, fy = 0.0f;
+	SDL_GetMouseState(&fx, &fy);
+	x = (int)fx;
+	y = (int)fy;
 }

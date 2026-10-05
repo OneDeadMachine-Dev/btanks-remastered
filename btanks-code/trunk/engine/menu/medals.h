@@ -2,6 +2,7 @@
 #define BTANKS_MENU_MEDALS_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 
 namespace sdlx {
 	class Surface;

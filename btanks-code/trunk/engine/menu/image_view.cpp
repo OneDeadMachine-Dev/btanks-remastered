@@ -83,7 +83,7 @@ void ImageView::setDestination(const v2<float> &pos) {
 }
 
 bool ImageView::onMouseMotion(const int state, const int x, const int y, const int xrel, const int yrel) {
-	if ((state & SDL_BUTTON(1)) == 0)
+	if ((state & SDL_BUTTON_MASK(1)) == 0)
 		return false;
 	
 	position.x -= xrel; 

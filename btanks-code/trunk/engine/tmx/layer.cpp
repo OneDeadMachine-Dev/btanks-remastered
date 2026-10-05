@@ -259,7 +259,7 @@ void Layer::init(const int w, const int h, const mrt::Chunk & data) {
 	Uint32 *p = (Uint32 *)_data.get_ptr();
 	n /= 4;
 	for(size_t i = 0; i < n; ++i) {
-		Uint32 x = SDL_SwapLE32(*p);
+		Uint32 x = SDL_Swap32LE(*p);
 		*p++ = x;
 	}
 }
@@ -399,7 +399,7 @@ void Layer::generateXML(std::string &result) const {
 		//convert all stuff.
 		Uint32 *p = (Uint32 *)data.get_ptr();
 		for(size_t i = 0; i < n; ++i) {
-			Uint32 x = SDL_SwapLE32(*p);
+			Uint32 x = SDL_Swap32LE(*p);
 			*p++ = x;
 		}
 		

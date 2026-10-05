@@ -19,7 +19,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <SDL_rwops.h>
+#include <SDL3/SDL_iostream.h>
 #include "sample.h"
 #include "sdl_ex.h"
 #include "context.h"

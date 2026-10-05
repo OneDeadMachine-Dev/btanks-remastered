@@ -19,24 +19,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include <SDL_audio.h>
+#include <SDL3/SDL_audio.h>
 #include "export_clunk.h"
+#include "context.h"
 namespace clunk {
 
-/*! 
+/*!
 	\brief Audio callback locker
-	This struct locks audio in ctor and releases lock from the dtor. 
-	This prevents audio callback from being called while clunk::AudioLocker is in the scope. 
+	This struct locks audio in ctor and releases lock from the dtor.
+	This prevents audio callback from being called while clunk::AudioLocker is in the scope.
 */
 
 struct CLUNKAPI AudioLocker {
-	///locks audio 
+	///locks audio
 	AudioLocker () {
-		SDL_LockAudio();
+		SDL_AudioStream *stream = Context::get_audio_stream();
+		if (stream != NULL)
+			SDL_LockAudioStream(stream);
 	}
-	///unlocks audio 
+	///unlocks audio
 	~AudioLocker() {
-		SDL_UnlockAudio();
+		SDL_AudioStream *stream = Context::get_audio_stream();
+		if (stream != NULL)
+			SDL_UnlockAudioStream(stream);
 	}
 };
 }

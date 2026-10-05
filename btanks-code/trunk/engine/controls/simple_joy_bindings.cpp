@@ -332,17 +332,17 @@ void SimpleJoyBindings::update(PlayerState &dst, const SDL_Event &event) const {
 		switch(s.type) {
 
 			case State::Button: {
-				if (event.type != SDL_JOYBUTTONDOWN && event.type != SDL_JOYBUTTONUP)
+				if (event.type != SDL_EVENT_JOYSTICK_BUTTON_DOWN && event.type != SDL_EVENT_JOYSTICK_BUTTON_UP)
 					continue;
 				const SDL_JoyButtonEvent &je = event.jbutton;
 				if (je.button != s.index) 
 					continue;
-				vi = je.state == SDL_PRESSED? 1:0;
+				vi = je.down? 1:0;
 				break;
 			}
 
 			case State::Axis: {
-				if (event.type != SDL_JOYAXISMOTION)
+				if (event.type != SDL_EVENT_JOYSTICK_AXIS_MOTION)
 					continue;
 				const SDL_JoyAxisEvent &je = event.jaxis;
 				if (je.axis != s.index)
@@ -353,7 +353,7 @@ void SimpleJoyBindings::update(PlayerState &dst, const SDL_Event &event) const {
 			}
 
 			case State::Hat: {
-				if (event.type != SDL_JOYHATMOTION)
+				if (event.type != SDL_EVENT_JOYSTICK_HAT_MOTION)
 					continue;
 				const SDL_JoyHatEvent &je = event.jhat;
 				if (je.hat != s.index)

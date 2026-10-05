@@ -1,4 +1,5 @@
 #include "chat.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "menu/text_control.h"
 #include "sdlx/font.h"

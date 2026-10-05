@@ -37,7 +37,7 @@ public:
 private: 
 	Semaphore(const Semaphore &);
 	const Semaphore& operator=(const Semaphore &);
-	SDL_sem *_sem;
+	SDL_Semaphore *_sem;
 };
 }
 

@@ -1,4 +1,4 @@
-file /Users/user/Documents/Code/bTanks Remastered/btanks-code/trunk/SConstruct,line 111:
+file /Users/user/Documents/Code/bTanks Remastered/btanks-code/trunk/SConstruct,line 110:
 	Configure(confdir = .sconf_temp)
 scons: Configure: Checking for C library expat... 
 scons: Configure: ".sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.c" is up to date.
@@ -16,7 +16,7 @@ scons: Configure: The original builder output was:
   |
 scons: Configure: ".sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.o" is up to date.
 scons: Configure: The original builder output was:
-  |gcc -o .sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.c
+  |gcc -o .sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DV3_DISABLE_Z -D_REENTRANT -I/opt/homebrew/include .sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0.c
   |
 scons: Configure: ".sconf_temp/conftest_1d8d985e474fc66fbb0dc5c9cb02b5c2_0_8eecd63cadcb44a0795576486f4f60ce" is up to date.
 scons: Configure: The original builder output was:
@@ -40,7 +40,7 @@ scons: Configure: The original builder output was:
   |
 scons: Configure: ".sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0.o" is up to date.
 scons: Configure: The original builder output was:
-  |gcc -o .sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0.c
+  |gcc -o .sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DV3_DISABLE_Z -D_REENTRANT -I/opt/homebrew/include .sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0.c
   |
 scons: Configure: ".sconf_temp/conftest_74b84a772eb7a0f5d1595222ad4fe30c_0_5c7d373d108a38dac393dd3cd52e7833" is up to date.
 scons: Configure: The original builder output was:
@@ -48,13 +48,13 @@ scons: Configure: The original builder output was:
   |
 scons: Configure: (cached) yes
 
-scons: Configure: Checking for C++ library SDL... 
-scons: Configure: ".sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.cpp" is up to date.
+scons: Configure: Checking for C++ library SDL3... 
+scons: Configure: ".sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.cpp" is up to date.
 scons: Configure: The original builder output was:
-  |.sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.cpp <-
+  |.sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.cpp <-
   |  |
   |  |
-  |  |#include "SDL.h"
+  |  |#include "SDL3/SDL.h"
   |  |
   |  |int main(void) {
   |  |  
@@ -62,23 +62,23 @@ scons: Configure: The original builder output was:
   |  |}
   |  |
   |
-scons: Configure: ".sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.o" is up to date.
+scons: Configure: ".sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.o" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++11 -D_SDL_main_h -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.cpp
+  |g++ -o .sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++17 -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DV3_DISABLE_Z -D_REENTRANT -I/opt/homebrew/include .sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.cpp
   |
-scons: Configure: ".sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0_26d7a502c892e767112c9f2eaad55081" is up to date.
+scons: Configure: ".sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0_e4b34022e39a3921845f34789fb01835" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0_26d7a502c892e767112c9f2eaad55081 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_98812f0faeb8486ad784fb0045a8f926_0.o -lexpat -lz -lSDL
+  |g++ -o .sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0_e4b34022e39a3921845f34789fb01835 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_e5629e3a6fed8b5f98db75ff82b544b8_0.o -lexpat -lz -lSDL3
   |
 scons: Configure: (cached) yes
 
-scons: Configure: Checking for C++ library smpeg... 
-scons: Configure: ".sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.cpp" is up to date.
+scons: Configure: Checking for C++ library SDL3_image... 
+scons: Configure: ".sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.cpp" is up to date.
 scons: Configure: The original builder output was:
-  |.sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.cpp <-
+  |.sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.cpp <-
   |  |
   |  |
-  |  |#include "smpeg/smpeg.h"
+  |  |#include "SDL3_image/SDL_image.h"
   |  |
   |  |int main(void) {
   |  |  
@@ -86,37 +86,13 @@ scons: Configure: The original builder output was:
   |  |}
   |  |
   |
-scons: Configure: ".sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.o" is up to date.
+scons: Configure: ".sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.o" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++11 -D_SDL_main_h -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.cpp
+  |g++ -o .sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++17 -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DV3_DISABLE_Z -D_REENTRANT -I/opt/homebrew/include .sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.cpp
   |
-scons: Configure: ".sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0_5e55a4a1eea6062fbf242d4a15e90a06" is up to date.
+scons: Configure: ".sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0_89823e0a73f1e3ec14e92fb3548ea183" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0_5e55a4a1eea6062fbf242d4a15e90a06 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_601f57af692e3619f2f4e86fdb121cc3_0.o -lexpat -lz -lSDL -lsmpeg
-  |
-scons: Configure: (cached) yes
-
-scons: Configure: Checking for C++ library SDL_image... 
-scons: Configure: ".sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.cpp" is up to date.
-scons: Configure: The original builder output was:
-  |.sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.cpp <-
-  |  |
-  |  |
-  |  |#include "SDL_image.h"
-  |  |
-  |  |int main(void) {
-  |  |  
-  |  |return 0;
-  |  |}
-  |  |
-  |
-scons: Configure: ".sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.o" is up to date.
-scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++11 -D_SDL_main_h -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.cpp
-  |
-scons: Configure: ".sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0_7481b80eaac38547fe2dd6d8ce4f6a71" is up to date.
-scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0_7481b80eaac38547fe2dd6d8ce4f6a71 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_44f70474406381d77f3972396aae8f90_0.o -lexpat -lz -lSDL -lsmpeg -lSDL_image
+  |g++ -o .sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0_89823e0a73f1e3ec14e92fb3548ea183 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_4667a78304c818383bdfe5a547161142_0.o -lexpat -lz -lSDL3 -lSDL3_image
   |
 scons: Configure: (cached) yes
 
@@ -136,32 +112,12 @@ scons: Configure: The original builder output was:
   |
 scons: Configure: ".sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.o" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++11 -D_SDL_main_h -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.cpp
+  |g++ -o .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++17 -fvisibility-inlines-hidden -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility-inlines-hidden -fvisibility=hidden -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DV3_DISABLE_Z -D_REENTRANT -I/opt/homebrew/include .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.cpp
   |
-scons: Configure: ".sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0_f047995544bdab89a9dacfa598f4396b" is up to date.
+scons: Configure: ".sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0_af3945dfa4682ba3a29af5d070628983" is up to date.
 scons: Configure: The original builder output was:
-  |g++ -o .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0_f047995544bdab89a9dacfa598f4396b -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.o -lexpat -lz -lSDL -lsmpeg -lSDL_image -lvorbisfile
+  |g++ -o .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0_af3945dfa4682ba3a29af5d070628983 -L/Users/user/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib .sconf_temp/conftest_6b70da3acd8be51f3e55971fb0ee8660_0.o -lexpat -lz -lSDL3 -lSDL3_image -lvorbisfile
   |
 scons: Configure: (cached) yes
-
-scons: Configure: Checking for C library m... 
-scons: Configure: ".sconf_temp/conftest_52245a4b0b646991474bd08f4fbae565_0.c" is up to date.
-scons: Configure: The original builder output was:
-  |.sconf_temp/conftest_52245a4b0b646991474bd08f4fbae565_0.c <-
-  |  |
-  |  |
-  |  |#include "xmmintrin.h"
-  |  |
-  |  |int main(void) {
-  |  |  
-  |  |return 0;
-  |  |}
-  |  |
-  |
-scons: Configure: Building ".sconf_temp/conftest_52245a4b0b646991474bd08f4fbae565_0.o" failed in a previous run and all its sources are up to date.
-scons: Configure: The original builder output was:
-  |gcc -o .sconf_temp/conftest_52245a4b0b646991474bd08f4fbae565_0.o -c -I/Users/user/btanks-deps/include -I/Users/user/btanks-deps/include/SDL -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -D_SDL_main_h -fvisibility=hidden -DGCC_HASCLASSVISIBILITY -fvisibility=hidden -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -O3 -Wall -Wno-deprecated -pedantic -Wno-long-long -pipe -pthread -DUSE_GLSDL -DV3_DISABLE_Z -D_REENTRANT -D_THREAD_SAFE -I/opt/homebrew/include/SDL .sconf_temp/conftest_52245a4b0b646991474bd08f4fbae565_0.c
-  |
-scons: Configure: (cached) no
 
 

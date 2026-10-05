@@ -2,6 +2,7 @@
 #define BTANKS_NOTEPAD_H__
 
 #include "sdlx/rect.h"
+#include "sdlx/keysym.h"
 #include <string>
 #include <vector>
 #include "control.h"

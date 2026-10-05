@@ -93,7 +93,7 @@ bool LayerListDialog::onKey(const SDL_keysym sym) {
 		hide();
 		return true;
 
-	case SDLK_n: 
+	case SDLK_N: 
 		LOG_DEBUG(("showing new layer dialog..."));		
 		_new_layer->hide(false);
 		return true;

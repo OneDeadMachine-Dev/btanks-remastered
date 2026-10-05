@@ -29,6 +29,7 @@
 */
 
 #include "control.h"
+#include "sdlx/keysym.h"
 #include "sdlx/rect.h"
 #include <string>
 #include <vector>

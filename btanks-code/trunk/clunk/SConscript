@@ -13,7 +13,7 @@ env.Append(CPPDEFINES=['CLUNKAPI=DLLEXPORT'])
 if have_sse: 
 	env.Append(CPPDEFINES=['CLUNK_USES_SSE'])
 
-clunk_libs = ['SDL']
+clunk_libs = ['SDL3']
 
 if sys.platform != 'win32':
 	env.Append(LINKFLAGS=['-Wl,-rpath,'+ lib_dir])

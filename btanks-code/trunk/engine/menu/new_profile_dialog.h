@@ -2,6 +2,7 @@
 #define BTANKS_MENU_NEW_PROFILE_DIALOG_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include "text_control.h"
 
 class Button;

@@ -1,4 +1,5 @@
 #include "medals.h"
+#include "sdlx/keysym.h"
 #include "box.h"
 #include "game_monitor.h"
 #include "resource_manager.h"

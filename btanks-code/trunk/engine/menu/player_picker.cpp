@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "player_picker.h"
+#include "sdlx/keysym.h"
 #include "container.h"
 #include "sdlx/font.h"
 #include "resource_manager.h"

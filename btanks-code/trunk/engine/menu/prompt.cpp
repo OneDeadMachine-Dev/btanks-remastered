@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "prompt.h"
+#include "sdlx/keysym.h"
 #include "text_control.h"
 #include "button.h"
 #include "sdlx/surface.h"

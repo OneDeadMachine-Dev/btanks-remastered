@@ -29,6 +29,7 @@
 */
 
 #include "control.h"
+#include "sdlx/keysym.h"
 #include <string>
 #include "alarm.h"
 #include "export_btanks.h"

@@ -864,7 +864,7 @@ void IMap::end(const std::string &name) {
 				Uint32 n = w * h;
 				Uint32 *p = (Uint32 *)_data.get_ptr();
 				for(size_t i = 0; i < n; ++i) {
-					Uint32 t = SDL_SwapLE32(*p++);
+					Uint32 t = SDL_Swap32LE(*p++);
 					if (t > 0)
 						tile_stats.insert(t);
 				}
@@ -1429,8 +1429,8 @@ TRY {
 			s = NULL;
 		}
 	}
-	const_cast<sdlx::Surface *>(image)->set_alpha(0, SDL_SRCALPHA);	//fixme: dangerous
-} CATCH("addTiles", {const_cast<sdlx::Surface *>(image)->set_alpha(0, SDL_SRCALPHA); throw; })
+	const_cast<sdlx::Surface *>(image)->set_alpha(0, sdlx::Surface::Alpha);	//fixme: dangerous
+} CATCH("addTiles", {const_cast<sdlx::Surface *>(image)->set_alpha(0, sdlx::Surface::Alpha); throw; })
 	return id;
 }
 

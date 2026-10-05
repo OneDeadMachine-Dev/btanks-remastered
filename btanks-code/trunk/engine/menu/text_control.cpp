@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "text_control.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "sdlx/font.h"
 #include "config.h"
@@ -119,7 +120,7 @@ bool TextControl::onKey(const SDL_keysym sym) {
 		break;
 		
 	case SDLK_BACKSPACE:
-		if (sym.mod & KMOD_CTRL) {
+		if (sym.mod & SDL_KMOD_CTRL) {
 			//set(std::string());
 			size_t next = _cursor_position; 
 			while(next > 0) {

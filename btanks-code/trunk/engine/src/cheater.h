@@ -32,15 +32,15 @@
 #include <vector>
 #include <deque>
 
-#include "sdlx/sdlx.h"
+#include "sdlx/keysym.h"
 #include "sl08/sl08.h"
 
 class Cheater {
-public: 
+public:
 	Cheater();
-private: 
-	sl08::slot1<void, const SDL_Event &, Cheater> on_event_slot;
-	void onEvent(const SDL_Event &event);
+private:
+	sl08::slot2<bool, const SDL_keysym, const bool, Cheater> on_event_slot;
+	bool onKey(const SDL_keysym sym, const bool pressed);
 	std::vector<std::string> _cheats;
 	size_t _buf_size;
 	char _buf[16];

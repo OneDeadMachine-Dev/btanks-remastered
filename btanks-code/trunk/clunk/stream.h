@@ -21,7 +21,7 @@
 
 
 #include "export_clunk.h"
-#include <SDL_audio.h>
+#include <SDL3/SDL_audio.h>
 
 namespace clunk {
 class Context;

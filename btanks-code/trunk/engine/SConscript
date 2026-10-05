@@ -7,7 +7,6 @@ Import('debug')
 Import('sdl_cflags')
 Import('sdl_libs')
 Import('lib_dir')
-Import('smpeg_lib')
 
 venv = env.Clone()
 env = env.Clone()
@@ -75,7 +74,7 @@ vorbis = 'vorbisfile'
 if debug and sys.platform == "win32": 
 	vorbis = 'vorbisfile_d'
 
-bt_libs = ['mrt', 'sdlx', smpeg_lib, 'SDL', vorbis, 'clunk']
+bt_libs = ['mrt', 'sdlx', 'SDL3', 'SDL3_image', vorbis, 'clunk']
 
 if sys.platform != 'win32':
 	got_lua = False
@@ -118,7 +117,7 @@ else:
 	Install('#', bt[0])
 
 bt_main_sources = ['src/main.cpp']
-bt_main_libs =  ['mrt', 'btanks_engine', 'SDL', 'sdlx']
+bt_main_libs =  ['mrt', 'btanks_engine', 'SDL3', 'sdlx']
 
 if sys.platform == "win32":
 	bt_rc = env.RES('src/bt.rc')

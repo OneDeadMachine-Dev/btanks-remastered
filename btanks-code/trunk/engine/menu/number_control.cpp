@@ -1,4 +1,5 @@
 #include "number_control.h"
+#include "sdlx/keysym.h"
 #include "sdlx/font.h"
 #include "sdlx/surface.h"
 #include "math/binary.h"

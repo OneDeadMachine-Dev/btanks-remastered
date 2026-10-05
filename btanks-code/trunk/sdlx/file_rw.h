@@ -8,10 +8,9 @@ namespace mrt {
 }
 
 namespace sdlx {
-	
-	SDLXAPI SDL_RWops * RWFromMRTFile(mrt::BaseFile *); //no close! 
+
+	SDLXAPI SDL_IOStream * RWFromMRTFile(mrt::BaseFile *); //no close!
 
 }
 
 #endif
-

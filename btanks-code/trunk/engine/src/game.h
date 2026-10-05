@@ -40,6 +40,7 @@
 #include "alarm.h"
 
 #include "export_btanks.h"
+#include "sdlx/keysym.h"
 #include "sdlx/sdlx.h"
 #include "sl08/sl08.h"
 

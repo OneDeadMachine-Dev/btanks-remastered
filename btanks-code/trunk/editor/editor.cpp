@@ -455,8 +455,8 @@ bool Editor::onKey(const SDL_keysym sym) {
 	
 	int dir = 0;
 	switch(sym.sym) {
-	case SDLK_x: 
-	case SDLK_c: 
+	case SDLK_X: 
+	case SDLK_C: 
 		if ((sym.mod & KMOD_CTRL) == 0)
 			break;
 		{
@@ -487,7 +487,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 			_brush = new Brush(_tile_size, tiles);
 			_brush->size = t2 - t1 + 1;
 						
-			bool cut = sym.sym == SDLK_x;
+			bool cut = sym.sym == SDLK_X;
 			_selection1.clear();
 			_selection2.clear();
 			LOG_DEBUG(("copypastecut: %s", cut?"cut":"copy"));
@@ -505,7 +505,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 		}
 		return true;
 	
-	case SDLK_q: 
+	case SDLK_Q: 
 		if (sym.mod & KMOD_ALT) {
 			Window->stop();
 			return true;
@@ -519,14 +519,14 @@ bool Editor::onKey(const SDL_keysym sym) {
 		return true;
 
 	case SDLK_INSERT:
-	case SDLK_i: 
+	case SDLK_I: 
 		if (Map->loaded()) {
 			SDL_GetMouseState(&mouse_pos.x, &mouse_pos.y);
 			_add_object->hide(false);
 		}
 		return true;
 	
-	case SDLK_z: 
+	case SDLK_Z: 
 		if (!Map->loaded())
 			return true;
 
@@ -538,7 +538,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 			return true;
 		} 
 		break;
-	case SDLK_r: 
+	case SDLK_R: 
 		if (!Map->loaded())
 			return true;
 
@@ -552,7 +552,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 			return true;
 		} 
 		break;
-	case SDLK_b: {
+	case SDLK_B: {
 		if (!Map->loaded())
 			return true;
 
@@ -565,7 +565,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 		_brush = b;
 		return true;
 		}
-	case SDLK_g: {
+	case SDLK_G: {
 		int mx, my;
 		SDL_GetMouseState(&mx, &my);
 		v2<int> window_pos(mx, my);
@@ -578,7 +578,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 
 		return true;
 	}
-	case SDLK_f: {
+	case SDLK_F: {
 		//LOG_DEBUG(("f"));
 		if (!Map->loaded())
 			return true;
@@ -606,7 +606,7 @@ bool Editor::onKey(const SDL_keysym sym) {
 			LOG_DEBUG(("_brush is not Brush. skip fill"));
 		return true;
 	}
-	case SDLK_e: 
+	case SDLK_E: 
 		if (!Map->loaded())
 			return true;
 
@@ -614,20 +614,20 @@ bool Editor::onKey(const SDL_keysym sym) {
 		delete _brush;
 		_brush = new Eraser(_tile_size);
 		return true;
-	case SDLK_m: 
+	case SDLK_M: 
 		if (!Map->loaded())
 			return true;
 		
 		_morph_dialog->hide(!_morph_dialog->hidden());
 		return true;
-	case SDLK_o: 
+	case SDLK_O: 
 		if (sym.mod & KMOD_ALT) {
 			_map_picker->hide(false);
 		} else {
 			_render_objects = !_render_objects;
 		}
 		return true;
-	case SDLK_s:
+	case SDLK_S:
 		if (sym.mod & KMOD_ALT && Map->loaded()) {
 			std::string result;
 			Map->generateXML(result);

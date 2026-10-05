@@ -231,7 +231,7 @@ bool TilesetDialog::onKey(const SDL_keysym sym) {
 		return true;
 	}
 	
-	if (sym.sym == SDLK_n) {
+	if (sym.sym == SDLK_N) {
 		if (_add_tileset->init(_fname, _tilesets, _all_tilesets))
 			_add_tileset->hide(false);
 		return true;
@@ -241,7 +241,7 @@ bool TilesetDialog::onKey(const SDL_keysym sym) {
 		return false;
 
 	int cd = (int)(sym.sym - SDLK_0);
-	int cc = (int)(sym.sym - SDLK_a);
+	int cc = (int)(sym.sym - SDLK_A);
 	int tileset = -1;
 	if(cd >= 0 && cd <= 9) 
 		tileset = cd?cd-1:9;

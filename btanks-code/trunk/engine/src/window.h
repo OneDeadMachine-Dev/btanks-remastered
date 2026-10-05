@@ -29,6 +29,7 @@
 */
 
 #include "sdlx/surface.h"
+#include "sdlx/keysym.h"
 #include "sl08/sl08.h"
 #include "sdlx/timer.h"
 #include "export_btanks.h"

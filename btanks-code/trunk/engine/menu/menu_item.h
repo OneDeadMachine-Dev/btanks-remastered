@@ -29,6 +29,7 @@
 */
 
 #include "control.h"
+#include "sdlx/keysym.h"
 
 namespace sdlx {
 	class Font;

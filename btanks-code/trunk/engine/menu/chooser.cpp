@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "chooser.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "math/binary.h"
 #include "sdlx/surface.h"

@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include <string>
+#include "sdlx/keysym.h"
 #include <stdexcept>
 #include "scroll_list.h"
 #include "config.h"

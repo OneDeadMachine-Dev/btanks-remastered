@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "container.h"
+#include "sdlx/keysym.h"
 #include "mrt/logger.h"
 #include "sdlx/rect.h"
 

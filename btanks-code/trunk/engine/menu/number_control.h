@@ -2,6 +2,7 @@
 #define __BTANKS_NUMBER_CONTROL_H__
 
 #include <string>
+#include "sdlx/keysym.h"
 #include "sdlx/rect.h"
 #include "menu/control.h"
 

@@ -71,7 +71,6 @@ else:
 #if stl_port_debug: 
 #	env.Append(CPPDEFINES = ['_STLP_DEBUG', '_STLP_DEBUG_UNINITIALIZED'])
 
-env.Append(CPPDEFINES = ['USE_GLSDL'])
 env.Append(CPPDEFINES = ['V3_DISABLE_Z'])
 env.Append(CPPDEFINES = ['_REENTRANT'])
 
@@ -111,10 +110,10 @@ conf_env = env.Clone()
 conf = Configure(conf_env)
 
 if sys.platform != "win32":
-	sdl_cflags = env.ParseFlags('!pkg-config --cflags sdl')
-	sdl_libs = env.ParseFlags('!pkg-config --libs sdl')
+	sdl_cflags = env.ParseFlags('!pkg-config --cflags sdl3')
+	sdl_libs = env.ParseFlags('!pkg-config --libs sdl3')
 	conf.env.MergeFlags(sdl_cflags, sdl_libs)
-else: 
+else:
 	sdl_cflags = {}
 	sdl_libs = {}
 
@@ -130,21 +129,14 @@ if sys.platform == "win32":
 	conf.env.Append(LINKFLAGS = ['/SUBSYSTEM:WINDOWS', '/FORCE'])
 	conf.env.Append(LIBS=['SDLmain'])
 
-if not conf.CheckLibWithHeader('SDL', 'SDL.h', 'c++'):
+if not conf.CheckLibWithHeader('SDL3', 'SDL3/SDL.h', 'c++'):
 	Exit(1)
-	
+
 
 Export('sdl_cflags')
 Export('sdl_libs')
-smpeg_lib = 'smpeg'
-if debug and sys.platform == 'win32':
-	smpeg_lib = 'smpeg_d'
-Export('smpeg_lib')
 
-if not conf.CheckLibWithHeader(smpeg_lib, 'smpeg/smpeg.h', 'c++'):
-	Exit(1)
-
-if not conf.CheckLibWithHeader('SDL_image', 'SDL_image.h', 'c++'):
+if not conf.CheckLibWithHeader('SDL3_image', 'SDL3_image/SDL_image.h', 'c++'):
 	Exit(1)
 
 if not conf.CheckLibWithHeader('vorbisfile', 'vorbis/vorbisfile.h', 'c++'):
@@ -154,10 +146,11 @@ if sys.platform == 'win32':
 	if not conf.CheckLibWithHeader('lua', 'lua.hpp', 'c++'):
 		Exit(1)
 
-if sys.platform != 'win32':
+machine = os.uname().machine if hasattr(os, 'uname') else 'unknown'
+if sys.platform != 'win32' and machine in ('i386', 'i686', 'x86_64'):
 	have_sse = conf.CheckLibWithHeader('m', "xmmintrin.h", "c")
 else:
-	have_sse = conf.CheckLibWithHeader('kernel32', "xmmintrin.h", "c") # hackish lib :(
+	have_sse = False
 
 conf.Finish()
 
@@ -264,8 +257,9 @@ for dir in bt_sublibs:
 for dir in bt_sublibs:
 	env.Append(LIBPATH=['#/build/' + buildmode + '/' + dir])
 
-env.VariantDir('#/build/' + buildmode + '/editor', 'editor', 0)
-SConscript('#/build/' + buildmode + '/editor/SConscript')
+#editor is still on the SDL1.2 api: migrate it separately, skip for now
+#env.VariantDir('#/build/' + buildmode + '/editor', 'editor', 0)
+#SConscript('#/build/' + buildmode + '/editor/SConscript')
 
 env.Append(LIBPATH=['#/build/' + buildmode + '/engine'])
 

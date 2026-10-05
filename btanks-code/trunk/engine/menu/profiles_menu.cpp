@@ -1,4 +1,5 @@
 #include "profiles_menu.h"
+#include "sdlx/keysym.h"
 #include "box.h"
 #include "scroll_list.h"
 #include "config.h"

@@ -2,6 +2,7 @@
 #define BTANKS_SIMPLE_GAMEPAD_SETUP_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include "math/v2.h"
 #include "sl08/sl08.h"
 #include "sdlx/joystick.h"

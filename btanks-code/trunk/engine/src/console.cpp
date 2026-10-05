@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include <vector>
+#include "sdlx/keysym.h"
 
 #include "sdlx/surface.h"
 #include "sdlx/font.h"
@@ -54,7 +55,7 @@ bool IConsole::onKey(const SDL_keysym sym, const bool pressed) {
 	}
 
 	if (!_active) {	
-		if (sym.sym == SDLK_BACKQUOTE) {
+		if (sym.sym == SDLK_GRAVE) {
 			_active = true;
 			return true;
 		}
@@ -67,7 +68,7 @@ bool IConsole::onKey(const SDL_keysym sym, const bool pressed) {
 	switch(sym.sym) {
 
 	case SDLK_ESCAPE:
-	case SDLK_BACKQUOTE:
+	case SDLK_GRAVE:
 		_active = false;
 		break;
 	

@@ -29,6 +29,7 @@
 */
 
 #include <deque>
+#include "sdlx/keysym.h"
 #include <string>
 #include "container.h"
 #include "box.h"

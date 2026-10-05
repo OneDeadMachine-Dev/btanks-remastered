@@ -2,6 +2,7 @@
 #define BTANKS_SHOP_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include <string>
 
 class ScrollList;

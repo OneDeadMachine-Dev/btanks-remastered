@@ -26,6 +26,7 @@
 */
 
 #include <stdlib.h>
+#include "sdlx/keysym.h"
 #include <time.h>
 #include "object.h"
 #include "game.h"
@@ -645,14 +646,14 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		return false;
 
 /*
--			case SDL_JOYBUTTONDOWN:
+-			case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
 -				if (event.jbutton.button == 9) 
 -					Game->pause();
 -			break;
 -			
 */
 #	ifndef _WINDOWS
-	if (key.sym==SDLK_RETURN && key.mod & KMOD_CTRL) {
+	if (key.sym==SDLK_RETURN && key.mod & SDL_KMOD_CTRL) {
 		TRY {
 			Window->get_surface().toggle_fullscreen();
 		} CATCH("main loop", {});
@@ -663,7 +664,7 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		pause();
 		return true;
 	}
-	if (key.sym==SDLK_s && key.mod & KMOD_SHIFT) {
+	if (key.sym==SDLK_S && key.mod & SDL_KMOD_SHIFT) {
 		std::string path = mrt::Directory::get_app_dir("Battle Tanks", "btanks") + "/";
 		std::string name = Map->getName();
 		path += name.empty()?"screenshot":name;
@@ -680,7 +681,7 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		} CATCH("saving screenshot", {});
 		return true;
 	}
-	if (key.sym==SDLK_m && key.mod & KMOD_SHIFT && Map->loaded()) {
+	if (key.sym==SDLK_M && key.mod & SDL_KMOD_SHIFT && Map->loaded()) {
 		std::string path = mrt::Directory::get_app_dir("Battle Tanks", "btanks") + "/";
 		std::string name = Map->getName();
 		path += name.empty()?"map":name;
@@ -690,7 +691,7 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		LOG_DEBUG(("creating map screenshot %dx%d", msize.x, msize.y));
 
 		sdlx::Surface screenshot;
-		screenshot.create_rgb(msize.x, msize.y, 32, SDL_SWSURFACE | SDL_SRCALPHA);
+		screenshot.create_rgb(msize.x, msize.y, 32, sdlx::Surface::Software | sdlx::Surface::Alpha);
 		screenshot.display_format_alpha();
 		screenshot.fill_rect(screenshot.get_size(), screenshot.map_rgba(0,0,0,255));
 
@@ -702,7 +703,7 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		return true;
 	}
 
-	if (key.sym == SDLK_m && _main_menu->hidden()) {
+	if (key.sym == SDLK_M && _main_menu->hidden()) {
 		_hud->toggleMapMode();
 		return true;
 	}
@@ -761,20 +762,18 @@ void IGame::onEvent(const SDL_Event &event) {
 	if (_main_menu)
 		_main_menu->onEvent(event);
 
-	if (event.type == SDL_QUIT)
+	if (event.type == SDL_EVENT_QUIT)
 		quit();
 		
-	if (event.type == SDL_ACTIVEEVENT) {
-		const SDL_ActiveEvent & active = event.active;
-		if (active.state == SDL_APPMOUSEFOCUS)
-			return;
-		
-		LOG_DEBUG(("active event: %d, %d", active.state, active.gain));
-		if (active.gain == 0 && !_paused)
+	if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST || event.type == SDL_EVENT_WINDOW_MINIMIZED) {
+		LOG_DEBUG(("window lost focus"));
+		if (!_paused)
 			pause();
 	}
-	
-	if (_paused && (event.type == SDL_KEYDOWN || event.type == SDL_MOUSEBUTTONDOWN))
+	if (event.type == SDL_EVENT_WINDOW_MOUSE_ENTER || event.type == SDL_EVENT_WINDOW_MOUSE_LEAVE)
+		return;
+
+	if (_paused && (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN))
 		pause();
 }
 

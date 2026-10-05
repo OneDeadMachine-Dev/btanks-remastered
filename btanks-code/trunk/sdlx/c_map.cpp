@@ -196,25 +196,38 @@ const bool CollisionMap::collides(const sdlx::Rect &src, const CollisionMap *oth
 
 static inline const bool test_pixel(const sdlx::Surface * surface, const unsigned x, const unsigned y, const CollisionMap::Type type) {
 	Uint32 pixelcolor = surface->get_pixel(x, y);
-	
+
+	SDL_BlendMode blend = SDL_BLENDMODE_NONE;
+	SDL_GetSurfaceBlendMode(surface->get_sdl_surface(), &blend);
+
 	switch(type) {
 	case CollisionMap::OnlyOpaque:
-		if ((surface->getFlags() & SDL_SRCALPHA) == SDL_SRCALPHA) {
+		if (blend == SDL_BLENDMODE_BLEND) {
 			Uint8 r, g, b, a;
 			surface->get_rgba(pixelcolor, r, g, b, a);
 			return a == 255;
 		}
-		return (pixelcolor !=  surface->get_pixel_format()->colorkey);
+		{
+			Uint32 key = 0;
+			if (surface->get_color_key(key))
+				return pixelcolor != key;
+		}
+		return true;
 
-	case CollisionMap::AnyVisible: 
-		if ((surface->getFlags() & SDL_SRCALPHA) == SDL_SRCALPHA) {
+	case CollisionMap::AnyVisible:
+		if (blend == SDL_BLENDMODE_BLEND) {
 			Uint8 r, g, b, a;
 			surface->get_rgba(pixelcolor, r, g, b, a);
 			return a >= 250;
 		}
-		return (pixelcolor !=  surface->get_pixel_format()->colorkey);
+		{
+			Uint32 key = 0;
+			if (surface->get_color_key(key))
+				return pixelcolor != key;
+		}
+		return true;
 	}
-	
+
 	return false;
 }
 

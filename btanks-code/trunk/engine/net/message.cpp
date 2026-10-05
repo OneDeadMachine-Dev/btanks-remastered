@@ -41,7 +41,7 @@
 #	include <arpa/inet.h>
 #endif
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 Message::Message() : channel(-1), type(None), data(), _attrs(), timestamp(SDL_GetTicks()) {}
 

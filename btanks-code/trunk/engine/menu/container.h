@@ -29,6 +29,7 @@
 */
 
 #include "control.h"
+#include "sdlx/keysym.h"
 #include <list>
 #include <math/v2.h>
 #include "export_btanks.h"

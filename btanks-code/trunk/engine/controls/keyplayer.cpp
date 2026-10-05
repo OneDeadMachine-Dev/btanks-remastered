@@ -27,6 +27,7 @@
 */
 
 #include <string.h>
+#include "sdlx/keysym.h"
 #include <assert.h>
 #include "keyplayer.h"
 #include "config.h"
@@ -62,14 +63,14 @@ KeyPlayer::KeyPlayer(const std::string &variant) {
 	Config->get(base + ".disembark", leave, keys[i][6]);
 	Config->get(base + ".hint-control", hint_control, keys[i][7]);
 
-	_up = (SDLKey)up;
-	_down = (SDLKey)down;
-	_left = (SDLKey)left;
-	_right = (SDLKey)right;
-	_fire = (SDLKey)fire;
-	_alt_fire = (SDLKey)alt_fire;
-	this->leave = (SDLKey)leave;
-	_hint_control = (SDLKey)hint_control;
+	_up = (SDL_Keycode)up;
+	_down = (SDL_Keycode)down;
+	_left = (SDL_Keycode)left;
+	_right = (SDL_Keycode)right;
+	_fire = (SDL_Keycode)fire;
+	_alt_fire = (SDL_Keycode)alt_fire;
+	this->leave = (SDL_Keycode)leave;
+	_hint_control = (SDL_Keycode)hint_control;
 }
 
 void KeyPlayer::_updateState(PlayerSlot &slot, PlayerState &state, const float dt) {

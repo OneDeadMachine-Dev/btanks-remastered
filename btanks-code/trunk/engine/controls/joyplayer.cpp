@@ -44,9 +44,9 @@ JoyPlayer::JoyPlayer(const int idx): _idx(idx), _joy(idx) {
 
 void JoyPlayer::on_event(const SDL_Event &event) {
 	if (
-		((event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP) && event.jbutton.which == _idx) ||
-		(event.type == SDL_JOYAXISMOTION && event.jaxis.which == _idx) ||
-		(event.type == SDL_JOYHATMOTION && event.jhat.which == _idx)
+		((event.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN || event.type == SDL_EVENT_JOYSTICK_BUTTON_UP) && event.jbutton.which == _idx) ||
+		(event.type == SDL_EVENT_JOYSTICK_AXIS_MOTION && event.jaxis.which == _idx) ||
+		(event.type == SDL_EVENT_JOYSTICK_HAT_MOTION && event.jhat.which == _idx)
 	) {
 		_bindings.update(_state, event);
 	}

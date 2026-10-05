@@ -46,15 +46,15 @@ Thread::~Thread() {
 Uint32 Thread::get_id() const {
 	if (_thread == NULL)
 		throw_sdl(("get_id: thread was not started"));
-	
-	return SDL_GetThreadID(_thread);
+
+	return (Uint32)SDL_GetThreadID(_thread);
 }
 
 
 void Thread::start() {
-	if (_thread != NULL) 
+	if (_thread != NULL)
 		throw_ex(("thread was already started."));
-	_thread = SDL_CreateThread(sdlx_thread_starter, reinterpret_cast<void *>(this));
+	_thread = SDL_CreateThread(sdlx_thread_starter, "sdlx::Thread", reinterpret_cast<void *>(this));
 	_starter.wait();
 }
 
@@ -68,8 +68,12 @@ const int Thread::wait() {
 }
 
 void Thread::kill() {
+	//SDL3 has no SDL_KillThread (it was never safe). the only users were
+	//the network monitor/scanner threads which are torn down cooperatively.
+	LOG_WARN(("kill: not supported since SDL3, waiting for thread instead"));
 	if (_thread == NULL)
-		throw_sdl(("kill: thread was not started"));
-	SDL_KillThread(_thread);
+		return;
+	int r;
+	SDL_WaitThread(_thread, &r);
 	_thread = NULL;
 }

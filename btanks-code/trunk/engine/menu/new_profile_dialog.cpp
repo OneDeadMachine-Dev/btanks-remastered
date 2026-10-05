@@ -1,4 +1,5 @@
 #include "new_profile_dialog.h"
+#include "sdlx/keysym.h"
 #include "text_control.h"
 #include "button.h"
 #include "i18n.h"

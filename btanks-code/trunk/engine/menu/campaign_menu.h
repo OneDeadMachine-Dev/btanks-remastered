@@ -2,6 +2,7 @@
 #define BTANKS_CAMPAIGN_MENU_H__
 
 #include "mrt/xml.h"
+#include "sdlx/keysym.h"
 #include "sdlx/rect.h"
 #include "campaign.h"
 #include "container.h"

@@ -1,4 +1,5 @@
 #include "campaign_menu.h"
+#include "sdlx/keysym.h"
 #include "box.h"
 #include "finder.h"
 #include "i18n.h"
@@ -353,7 +354,7 @@ bool CampaignMenu::onKey(const SDL_keysym sym) {
 	if (Container::onKey(sym))
 		return true;
 	switch(sym.sym) {
-	case SDLK_m: 
+	case SDLK_M: 
 		medals->hide(false);
 		return true;
 	case SDLK_KP_ENTER:

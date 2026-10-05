@@ -29,6 +29,7 @@
 */
 
 #include <deque>
+#include "sdlx/keysym.h"
 #include <string>
 #include "sl08/sl08.h"
 #include "mrt/singleton.h"

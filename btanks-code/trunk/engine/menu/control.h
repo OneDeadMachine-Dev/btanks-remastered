@@ -29,6 +29,7 @@
 */
 
 #include "sdlx/sdlx.h"
+#include "sdlx/keysym.h"
 #include "export_btanks.h"
 
 namespace sdlx {

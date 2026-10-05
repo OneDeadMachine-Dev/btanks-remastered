@@ -27,6 +27,7 @@
 */
 
 #include "sdlx/font.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "i18n.h"
 #include "menu_item.h"

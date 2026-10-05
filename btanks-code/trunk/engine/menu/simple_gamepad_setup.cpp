@@ -1,4 +1,5 @@
 #include "simple_gamepad_setup.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "box.h"
 #include "label.h"
@@ -83,7 +84,7 @@ void SimpleGamepadSetup::on_event(const SDL_Event &event) {
 		return;
 
 	switch(event.type) {
-		case SDL_JOYAXISMOTION: {
+		case SDL_EVENT_JOYSTICK_AXIS_MOTION: {
 			const SDL_JoyAxisEvent &je = event.jaxis;
 			int v = math::abs(je.value);
 			if (v < (int)(32767 * dead_zone->get())) 
@@ -94,7 +95,7 @@ void SimpleGamepadSetup::on_event(const SDL_Event &event) {
 		 	//++active_row;
 			break;
 		}
-		case SDL_JOYHATMOTION: {
+		case SDL_EVENT_JOYSTICK_HAT_MOTION: {
 			const SDL_JoyHatEvent &je = event.jhat;
 			if (je.value == SDL_HAT_CENTERED)
 				break;
@@ -106,7 +107,7 @@ void SimpleGamepadSetup::on_event(const SDL_Event &event) {
 			break;
 		}
 
-		case SDL_JOYBUTTONDOWN: {
+		case SDL_EVENT_JOYSTICK_BUTTON_DOWN: {
 			const SDL_JoyButtonEvent &je = event.jbutton;
 			//LOG_DEBUG(("button %d", je.button));
 			bindings.set(active_row, SimpleJoyBindings::State(SimpleJoyBindings::State::Button, je.button, 0));

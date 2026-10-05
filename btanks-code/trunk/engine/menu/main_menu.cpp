@@ -1,4 +1,5 @@
 #include "main_menu.h"
+#include "sdlx/keysym.h"
 #include "menu_item.h"
 #include "campaign_menu.h"
 #include "start_server_menu.h"
@@ -169,15 +170,15 @@ void MainMenu::onEvent(const SDL_Event &e) {
 
 	SDL_keysym sym;
 	memset(&sym, 0, sizeof(sym));
-	sym.mod = KMOD_NONE;
+	sym.mod = SDL_KMOD_NONE;
 
 	if (generate_key_events_for_gamepad) {	
 	
-	if (e.type == SDL_JOYBUTTONDOWN || e.type == SDL_JOYBUTTONUP) {
+	if (e.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN || e.type == SDL_EVENT_JOYSTICK_BUTTON_UP) {
 		sym.sym = (e.jbutton.button == 0)?SDLK_RETURN:SDLK_ESCAPE;
-		if (e.type == SDL_JOYBUTTONDOWN)
+		if (e.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN)
 			onKey(sym);
-	} else if (e.type == SDL_JOYHATMOTION) {
+	} else if (e.type == SDL_EVENT_JOYSTICK_HAT_MOTION) {
 		if (e.jhat.value & SDL_HAT_UP) {
 			sym.sym = SDLK_UP;
 			onKey(sym);
@@ -191,7 +192,7 @@ void MainMenu::onEvent(const SDL_Event &e) {
 			sym.sym = SDLK_RIGHT;
 			onKey(sym);
 		}
-	} else if (e.type == SDL_JOYAXISMOTION && e.jaxis.axis < 4) {
+	} else if (e.type == SDL_EVENT_JOYSTICK_AXIS_MOTION && e.jaxis.axis < 4) {
 #define M (32768 - 3276)
 		static int value[4] = {0,0,0,0};
 		const int a = e.jaxis.axis;

@@ -2,6 +2,7 @@
 #define BTANKS_PROFILES_MENU_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include <vector>
 #include <string>
 

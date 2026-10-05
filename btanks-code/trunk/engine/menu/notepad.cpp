@@ -1,4 +1,5 @@
 #include "notepad.h"
+#include "sdlx/keysym.h"
 #include "resource_manager.h"
 #include "sdlx/surface.h"
 #include "sdlx/font.h"

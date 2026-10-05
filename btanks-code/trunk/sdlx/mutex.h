@@ -35,7 +35,7 @@ private:
 	void lock() const;
 	void unlock() const;
 
-	SDL_mutex *_mutex;
+	SDL_Mutex *_mutex;
 	
 	friend class AutoMutex;
 };

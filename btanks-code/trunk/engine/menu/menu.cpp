@@ -26,6 +26,7 @@
 */
 
 #include "menu.h"
+#include "sdlx/keysym.h"
 #include "menu_item.h"
 #include "sound/mixer.h"
 #include "sdlx/font.h"

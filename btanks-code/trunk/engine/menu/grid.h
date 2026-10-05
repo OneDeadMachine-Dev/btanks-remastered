@@ -2,6 +2,7 @@
 #define BTANKS_MENU_TABLE_H__
 
 #include "control.h"
+#include "sdlx/keysym.h"
 #include "math/matrix.h"
 
 class Grid : public Control {

@@ -1,6 +1,6 @@
 
 
-#include "smpeg/smpeg.h"
+#include "SDL3/SDL.h"
 
 int main(void) {
   

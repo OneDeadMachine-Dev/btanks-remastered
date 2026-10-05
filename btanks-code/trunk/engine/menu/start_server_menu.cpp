@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "start_server_menu.h"
+#include "sdlx/keysym.h"
 #include "button.h"
 #include "mrt/logger.h"
 #include "menu.h"

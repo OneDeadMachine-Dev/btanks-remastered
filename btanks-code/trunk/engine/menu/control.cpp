@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "control.h"
+#include "sdlx/keysym.h"
 #include "sound/mixer.h"
 
 Control::Control() : _base_x(0), _base_y(0), _changed(false), _mouse_in(false), _hidden(false), _modal(false) {}

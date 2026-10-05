@@ -29,6 +29,7 @@
 */
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include "box.h"
 #include "sdlx/rect.h"
 #include <string>

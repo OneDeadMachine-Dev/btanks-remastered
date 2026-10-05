@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "join_server_menu.h"
+#include "sdlx/keysym.h"
 #include "button.h"
 #include "mrt/logger.h"
 #include "menu.h"
@@ -367,7 +368,7 @@ bool JoinServerMenu::onKey(const SDL_keysym sym) {
 		join();
 		return true;
 	
-	case SDLK_a: 
+	case SDLK_A: 
 		_add_dialog->hide(false);
 		return true;
 	

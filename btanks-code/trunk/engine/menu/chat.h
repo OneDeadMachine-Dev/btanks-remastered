@@ -2,6 +2,7 @@
 #define BTANKS_CHAT_H__
 
 #include "container.h"
+#include "sdlx/keysym.h"
 #include <deque>
 #include <string>
 

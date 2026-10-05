@@ -26,6 +26,7 @@
  * from your version and license this file solely under the GPL without exception. 
 */
 #include "options_menu.h"
+#include "sdlx/keysym.h"
 #include "button.h"
 #include "chooser.h"
 #include "menu.h"
@@ -477,15 +478,15 @@ bool OptionsMenu::onKey(const SDL_keysym sym) {
 		hide();
 		return true;
 
-	case SDLK_j: 
-	case SDLK_g: 
+	case SDLK_J: 
+	case SDLK_G: 
 		if (_gamepad != NULL && _keys->hidden()) {
 			_gamepad->hide(false);
 		}
 			
 		return true;
 
-	case SDLK_r: 
+	case SDLK_R: 
 		if (_gamepad == NULL || _gamepad->hidden())
 			_keys->hide(false);
 		return true;

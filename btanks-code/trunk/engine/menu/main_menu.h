@@ -29,6 +29,7 @@
 */
 
 #include "menu.h"
+#include "sdlx/keysym.h"
 #include "sl08/sl08.h"
 
 class NetworkStatusControl;
