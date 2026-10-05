@@ -1,0 +1,31 @@
+import sys
+Import('env')
+
+env = env.Clone()
+env.Append(CPPDEFINES=['MRTAPI=DLLEXPORT'])
+env.Append(CPPPATH=['.'])
+
+libs = ['expat', 'z']
+
+if sys.platform == "win32":
+	libs.append('Ws2_32')
+	libs.append('shell32')
+
+if sys.platform == 'darwin':
+	env.Append(LINKFLAGS=['-framework', 'CoreFoundation'])
+
+mrt = env.SharedLibrary('mrt', \
+	['exception.cpp', 'fmt.cpp', 'ioexception.cpp', 'logger.cpp', 'chunk.cpp', 'random.cpp', 
+	'base_file.cpp', 'file.cpp', 'xml.cpp', 'b64.cpp', 'gzip.cpp', 'serializator.cpp', 
+	'serializable.cpp', 'sys_socket.cpp', 'tcp_socket.cpp', 'socket_set.cpp', 'directory.cpp', 
+	'fs_node.cpp', 'timespy.cpp', 'crash.cpp', 'lang.cpp', 'utf8_utils.cpp', 'udp_socket.cpp', 
+	'memory_info.cpp', 'calendar.cpp', 'base_directory.cpp', 'zip_dir.cpp', 'zip_file.cpp', 
+	'net_exception.cpp', 'dict_serializator.cpp', 
+	], LIBS=libs)
+
+if sys.platform != 'win32' and 'prefix' in env and len(env['prefix']) > 0:
+	Import('install_targets')
+	Import('lib_dir')
+	install_targets.append(Install(lib_dir, mrt))
+else:
+	Install('#', mrt[0])
