@@ -201,10 +201,12 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	_logical_w = w;
 	_logical_h = h;
 	if ((flags & Fullscreen) == Fullscreen) {
-		int pw = 0, ph = 0;
-		SDL_GetWindowSizeInPixels(_window, &pw, &ph);
-		if (pw > 0 && ph > 0) {
-			int lw = (int)(h * ((float)pw / ph)) & ~1;
+		//the window size is racy during the fullscreen mode switch: take the
+		//aspect from the desktop display mode instead
+		SDL_DisplayID display = SDL_GetDisplayForWindow(_window);
+		const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(display);
+		if (dm != NULL && dm->w > 0 && dm->h > 0) {
+			int lw = (int)(h * ((float)dm->w / dm->h)) & ~1;
 			if (lw < 640) lw = 640;
 			if (lw > 2048) lw = 2048;
 			_logical_w = lw;
