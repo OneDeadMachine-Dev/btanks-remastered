@@ -104,6 +104,18 @@ IGame::IGame() : _main_menu(NULL),
 	path = mrt::Directory::get_app_dir("Battle Tanks", "btanks") + "/";
 	Config->load(path + "bt.xml");
 
+	//the original project's master server (btanks.svalko.org) is gone: forget it, older
+	//configs and the old migration code stored it as the default
+	{
+		static const char *keys[] = {"multiplayer.client.master-server", "multiplayer.server.master-server"};
+		for(size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); ++i) {
+			std::string host;
+			Config->get(keys[i], host, std::string());
+			if (host == "btanks.svalko.org")
+				Config->set(keys[i], std::string());
+		}
+	}
+
 #if !defined(_WINDOWS) && !defined(__EMSCRIPTEN__) //browser: keep logging to the console (stderr)
 	std::string log;
 	Config->get("engine.log", log, "log");
@@ -374,10 +386,6 @@ void IGame::init(const int argc, char *argv[]) {
 			Config->get("engine.sound.volume.fx", fx_volume, 0.66f);
 			if (fx_volume >= 1.0f)
 				Config->set("engine.sound.volume.fx", 0.66f);
-		}
-		if (revision < 8084) {
-			Config->set("multiplayer.client.master-server", "btanks.svalko.org");
-			Config->set("multiplayer.server.master-server", "btanks.svalko.org");
 		}
 		
 		Config->set("engine.revision", getRevision());

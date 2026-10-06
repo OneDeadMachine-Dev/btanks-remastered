@@ -68,14 +68,17 @@ void Server::init() {
 	_monitor->start();
 	
 	if (RTConfig->server_mode) {
+		//no master server by default: the original one is long gone and a server must not
+		//phone home on its own. set multiplayer.server.master-server to use your own list
 		GET_CONFIG_VALUE("multiplayer.server.register-on-master-server", bool, rms, true);
-		GET_CONFIG_VALUE("multiplayer.server.master-server", std::string, mname, "btanks.svalko.org");
+		GET_CONFIG_VALUE("multiplayer.server.master-server", std::string, mname, std::string());
 		GET_CONFIG_VALUE("multiplayer.server.master-server-port", int, mport, 27254);
-		if (rms) {
+		if (rms && !mname.empty()) {
 			LOG_DEBUG(("registering server on master server..."));
 			TRY {
 				char buf[3];
 				mrt::TCPSocket sock;
+				sock.set_timeout(3000, 3000); //a dead master must never freeze the server
 				sock.connect(mname, mport);
 				
 				buf[0] = 's';

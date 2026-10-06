@@ -37,7 +37,9 @@ ILogger::ILogger() : _level(LL_DEBUG), _lines(0), fd(NULL) {}
 
 void ILogger::assign(const std::string &file) {
 	close();
-	fd = fopen(file.c_str(), "wt");	
+	fd = fopen(file.c_str(), "wt");
+	if (fd != NULL)
+		setvbuf(fd, NULL, _IOLBF, 0); //line buffered: the log survives a crash and can be tailed
 	if (fd == NULL)
 		throw_io(("fopen('%s', 'wt')", file.c_str()));
 }

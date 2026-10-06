@@ -84,8 +84,10 @@ TRY {
 		if (_scan) {
 			mrt::Chunk data;
 			TRY {
-				GET_CONFIG_VALUE("multiplayer.client.master-server", std::string, mname, "btanks.svalko.org");
+				GET_CONFIG_VALUE("multiplayer.client.master-server", std::string, mname, std::string());
 				GET_CONFIG_VALUE("multiplayer.client.master-server-port", int, mport, 27254);
+				if (mname.empty())
+					throw_ex(("no master server configured"));
 				LOG_DEBUG(("connecting to the master server %s:%d...", mname.c_str(), mport));
 				mrt::TCPSocket sock;
 				sock.set_timeout(3000, 3000);
