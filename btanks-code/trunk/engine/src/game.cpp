@@ -1212,6 +1212,15 @@ void IGame::onMap() {
 
 #include "sdlx/module.h"
 
+#ifdef __EMSCRIPTEN__
+//called by the page when the tab is hidden/closed: write the config before the browser freezes us
+extern "C" EMSCRIPTEN_KEEPALIVE void bt_save_config() {
+	TRY {
+		Config->save();
+	} CATCH("bt_save_config", {});
+}
+#endif
+
 void IGame::loadPlugins() {
 #ifdef __EMSCRIPTEN__
 	return; //statically linked

@@ -62,7 +62,8 @@ set(WASM_FLAGS -fwasm-exceptions -sSUPPORT_LONGJMP=wasm --use-port=sdl3 --use-po
 target_compile_options(btanks PRIVATE ${WASM_FLAGS} -O2 -Wno-deprecated -Wno-c++11-narrowing)
 target_link_options(btanks PRIVATE ${WASM_FLAGS}
 	-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456 -sSTACK_SIZE=1048576
-	-sFORCE_FILESYSTEM=1 -sEXIT_RUNTIME=0
+	-sFORCE_FILESYSTEM=1 -sEXIT_RUNTIME=0 -lidbfs.js
+	-sEXPORTED_FUNCTIONS=_main,_bt_save_config -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS
 	--preload-file ${TRUNK}/data@/data
 	--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/shell.html)
 target_link_libraries(btanks PRIVATE lua51 expat)

@@ -31,6 +31,9 @@
 
 
 #include "window.h"
+#ifdef __EMSCRIPTEN__
+#	include <emscripten.h>
+#endif
 #include "sdlx/keysym.h"
 #include "config.h"
 #include "sdlx/system.h"
@@ -105,7 +108,7 @@ void AllowAccessibilityShortcutKeys( bool bAllowKeys )
 
 IMPLEMENT_SINGLETON(Window, IWindow);
 
-IWindow::IWindow() : _fr(10.0f) {}
+IWindow::IWindow() : _fr(10.0f), _since_save(0) {}
 
 void IWindow::initSDL() {
 	LOG_DEBUG(("initializing SDL..."));
@@ -345,6 +348,21 @@ void IWindow::start_loop() {
 	_accumulator = 0;
 }
 
+//settings and profile are written periodically, not only on a clean exit: a browser
+//tab has no clean exit, and a crash must not lose the player's settings
+void IWindow::autosave_config(const double dt) {
+	_since_save += dt;
+	if (_since_save < 10.0)
+		return;
+	_since_save = 0;
+	TRY {
+		Config->save();
+#ifdef __EMSCRIPTEN__
+		EM_ASM({ if (Module.syncPersistent) Module.syncPersistent(); });
+#endif
+	} CATCH("autosave config", {});
+}
+
 //one frame: input -> N fixed simulation steps -> render tick -> present.
 //the desktop build calls it in a loop (run()), the browser build from the
 //requestAnimationFrame callback.
@@ -390,6 +408,7 @@ void IWindow::step() {
 
 	IWindow::flip();
 	debug_dump_frame();
+	autosave_config(elapsed);
 
 	int t_delta = _timer.microdelta();
 	if (t_delta < 0)

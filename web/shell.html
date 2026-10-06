@@ -45,6 +45,13 @@
 			else if (text) statusEl.textContent = text;
 		},
 		monitorRunDependencies(left) { if (left === 0) { statusEl.textContent = 'Запуск…'; } },
+		//settings/profile live in IndexedDB: ~/.btanks is an IDBFS mount, loaded before the game starts
+		preRun: [() => {
+			const dir = '/home/web_user/.btanks';
+			try { Module.FS.mkdirTree(dir); Module.FS.mount(Module.IDBFS, {}, dir); } catch (e) { console.warn('IDBFS unavailable', e); return; }
+			Module.addRunDependency('idbfs');
+			Module.FS.syncfs(true, (err) => { if (err) console.warn('IDBFS load', err); Module.removeRunDependency('idbfs'); });
+		}],
 		postRun: [() => { loading.classList.add('done'); Module.canvas.focus(); }],
 		onAbort(what) { statusEl.textContent = 'Ошибка: ' + what; loading.classList.remove('done'); },
 	};
@@ -54,6 +61,17 @@
 		let n = 0, t0 = performance.now();
 		(function tick() { n++; const t = performance.now(); if (t - t0 >= 1000) { el.textContent = Math.round(n * 1000 / (t - t0)) + ' fps'; n = 0; t0 = t; } requestAnimationFrame(tick); })();
 	}
+	//write to IndexedDB (one sync at a time), called by the game after every autosave
+	let syncing = false, again = false;
+	Module.syncPersistent = () => {
+		if (!Module.FS) return;
+		if (syncing) { again = true; return; }
+		syncing = true;
+		Module.FS.syncfs(false, () => { syncing = false; if (again) { again = false; Module.syncPersistent(); } });
+	};
+	const flush = () => { try { Module.ccall('bt_save_config', null, [], []); Module.syncPersistent(); } catch (e) {} };
+	document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+	window.addEventListener('pagehide', flush);
 	window.addEventListener('error', () => { statusEl.textContent = 'Что-то пошло не так. Подробности в консоли.'; });
 </script>
 {{{ SCRIPT }}}

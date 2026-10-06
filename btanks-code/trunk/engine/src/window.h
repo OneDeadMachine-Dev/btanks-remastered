@@ -92,6 +92,8 @@ private:
 
 	void dispatch_event(const SDL_Event *events, const int n, const int i);
 	void debug_dump_frame();
+	void autosave_config(const double dt);
+	double _since_save;
 	int _max_delay;
 	double _sim_step, _accumulator;
 	Uint64 _last_ns;
