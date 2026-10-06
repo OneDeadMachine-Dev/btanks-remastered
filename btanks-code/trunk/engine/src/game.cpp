@@ -647,7 +647,8 @@ bool IGame::onKey(const SDL_keysym key, const bool pressed) {
 		return true;
 	}
 	
-	if (pressed && Map->loaded() && _main_menu->hidden()) {
+	//the chat only makes sense with other players: no hidden input box in a local game
+	if (pressed && Map->loaded() && _main_menu->hidden() && !RTConfig->disable_network) {
 		if (_net_talk->hidden() && key.sym == SDLK_RETURN) {
 			_net_talk->hide(false);
 		} else if (!_net_talk->hidden()) {

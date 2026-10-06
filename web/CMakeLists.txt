@@ -69,6 +69,7 @@ target_link_options(btanks PRIVATE ${WASM_FLAGS}
 target_link_libraries(btanks PRIVATE lua51 expat)
 
 set_target_properties(btanks PROPERTIES
+	LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shell.html
 	SUFFIX .html
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out
 	OUTPUT_NAME index)

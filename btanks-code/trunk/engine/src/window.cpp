@@ -275,6 +275,12 @@ void IWindow::dispatch_event(const SDL_Event *events, const int n, const int i) 
 		SDL_keysym keysym;
 		keysym.scancode = event.key.scancode;
 		keysym.sym = event.key.key;
+#ifdef __EMSCRIPTEN__
+		//browsers report the layout's letter (Cyrillic on a Russian layout): bind the letter keys
+		//by their physical position so that WASD-style defaults work on any layout
+		if (keysym.sym >= 128 && keysym.scancode >= SDL_SCANCODE_A && keysym.scancode <= SDL_SCANCODE_Z)
+			keysym.sym = SDLK_A + (keysym.scancode - SDL_SCANCODE_A);
+#endif
 		keysym.mod = event.key.mod;
 		if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
 			//SDL1.2 keysym.unicode: attach the text of a directly following text input event

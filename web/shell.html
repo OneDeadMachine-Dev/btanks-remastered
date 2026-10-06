@@ -13,6 +13,14 @@
 	canvas { display: block; width: 100% !important; height: 100% !important; background: #000; outline: none; }
 	#fps { position: fixed; top: 6px; right: 8px; z-index: 3; padding: 2px 8px; border-radius: 4px; font: 12px/1.4 ui-monospace, monospace;
 		background: rgba(0,0,0,.55); color: #9f9; pointer-events: none; }
+	#help-btn { position: fixed; right: 10px; bottom: 10px; z-index: 3; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent);
+		background: rgba(20,17,13,.85); color: var(--accent); font: 700 17px system-ui; cursor: pointer; opacity: .8; }
+	#help-btn:hover, #help-btn:focus-visible { opacity: 1; outline: 2px solid var(--accent); }
+	#help { position: fixed; right: 10px; bottom: 50px; z-index: 3; width: min(340px, calc(100vw - 20px)); padding: 14px 16px; border-radius: 10px;
+		background: rgba(20,17,13,.94); border: 1px solid #5a4a2a; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+	#help h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+	#help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+	#help dt { font-weight: 600; white-space: nowrap; } #help dd { margin: 0; opacity: .85; }
 	#loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 14px; text-align: center;
 		background: var(--bg); z-index: 2; padding: 24px; }
 	#loading h1 { margin: 0; font-size: clamp(22px, 5vw, 38px); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
@@ -24,6 +32,20 @@
 </head>
 <body>
 <div id="host"><canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas></div>
+<button id="help-btn" type="button" aria-label="Управление" aria-expanded="false" aria-controls="help">?</button>
+<div id="help" hidden>
+	<h2>Управление</h2>
+	<dl>
+		<dt>Стрелки</dt><dd>ехать и поворачивать</dd>
+		<dt>Пробел</dt><dd>стрелять</dd>
+		<dt>Shift</dt><dd>дополнительное оружие: мины, бомбы (то, что подобрал)</dd>
+		<dt>E</dt><dd>выйти из машины / сесть в неё</dd>
+		<dt>1</dt><dd>показать, какие клавиши что делают</dd>
+		<dt>Tab</dt><dd>таблица очков</dd>
+		<dt>M</dt><dd>карта</dd>
+		<dt>Esc</dt><dd>меню</dd>
+	</dl>
+</div>
 <div id="fps" hidden></div>
 <div id="loading" role="status" aria-live="polite">
 	<h1>Battle Tanks</h1>
@@ -55,6 +77,8 @@
 		postRun: [() => { loading.classList.add('done'); Module.canvas.focus(); }],
 		onAbort(what) { statusEl.textContent = 'Ошибка: ' + what; loading.classList.remove('done'); },
 	};
+	const helpBtn = document.getElementById('help-btn'), help = document.getElementById('help');
+	helpBtn.addEventListener('click', () => { help.hidden = !help.hidden; helpBtn.setAttribute('aria-expanded', String(!help.hidden)); helpBtn.blur(); });
 	//?fps shows the browser's real frame rate (requestAnimationFrame), useful for performance reports
 	if (new URLSearchParams(location.search).has('fps')) {
 		const el = document.getElementById('fps'); el.hidden = false;
