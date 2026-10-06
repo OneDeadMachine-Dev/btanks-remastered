@@ -7,10 +7,11 @@
 ```sh
 brew install sdl3 sdl3_image libvorbis expat scons pkgconf
 ./build-mac.sh      # собирает всё в btanks-code/trunk (Lua 5.1 вшит в third_party/lua)
-./run-mac.sh        # или двойной клик по "Battle Tanks.app"
+./run-mac.sh        # запуск из дерева разработки, откуда угодно
+./make-app.sh       # самодостаточный dist/"Battle Tanks.app" (52 МБ, все dylib внутри)
 ```
 
-Игра ищет библиотеки по относительным путям `build/release/*`, поэтому запускать нужно из `btanks-code/trunk` (скрипты и `.app` делают это сами).
+Игра сама находит данные (`data/`) и библиотеки рядом с бинарником или внутри `.app`, поэтому текущая папка не важна. Приложение подписано ad-hoc: оно запускается на этом Mac. Чтобы раздавать другим, нужны Apple Developer ID и нотаризация.
 
 ## Структура
 
@@ -25,6 +26,7 @@ brew install sdl3 sdl3_image libvorbis expat scons pkgconf
 | `btanks-code/trunk/data` | ресурсы: карты, тайлы, звуки, музыка |
 | `btanks-code/trunk/editor` | редактор карт (пока на SDL 1.2, не собирается) |
 | `btanks-code/branches` | старые ветки svn, для справки |
+| `packaging/macos` | шаблон Info.plist и иконка для `make-app.sh` |
 
 ## Дорожная карта
 
@@ -33,7 +35,7 @@ brew install sdl3 sdl3_image libvorbis expat scons pkgconf
 - [x] Этап 2.1 — гигиена репозитория, воспроизводимая сборка без внешних префиксов
 - [x] Этап 3 — рендер: атлас текстур (тайлы, пули, частицы), затухание объектов через alpha-mod на GPU
 - [x] Этап 4 — фиксированный шаг симуляции 120 Гц (независимость от FPS), рабочий vsync
-- [ ] Этап 5 — `@rpath` для dylib, нормальный `.app` с подписью, запуск из любого места
+- [x] Этап 5 — `@rpath` для dylib, самодостаточный `.app` (`make-app.sh`), запуск из любого места
 - [ ] Этап 6 — Emscripten/WebGL: статический `bt_objects`, `main loop` без блокировки, офлайн-синглплеер
 - [ ] Этап 7 — редактор карт на SDL3, интро-видео, мультиплеер в вебе (WebSocket)
 

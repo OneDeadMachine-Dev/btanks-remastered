@@ -45,6 +45,7 @@
 #include "mrt/exception.h"
 #include "mrt/random.h"
 #include "mrt/fs_node.h"
+#include <SDL3/SDL_filesystem.h>
 #include "mrt/directory.h"
 
 #include "sdlx/system.h"
@@ -1202,6 +1203,24 @@ void IGame::loadPlugins() {
 	std::string plugin = std::string("../") + sdlx::Module::mangle("bt_objects");
 	//LOG_DEBUG(("checking %s", plugin.c_str()));
 	Finder->findAll(path, plugin);
+
+#ifdef __APPLE__
+	//app bundle: Contents/Frameworks/libbt_objects.dylib, next to the executable otherwise
+	if (path.empty()) {
+		const char *base = SDL_GetBasePath();
+		if (base != NULL) {
+			mrt::FSNode node;
+			const std::string cand[] = { std::string(base) + "../Frameworks/", std::string(base) };
+			for(size_t i = 0; i < sizeof(cand) / sizeof(cand[0]); ++i) {
+				const std::string file = cand[i] + sdlx::Module::mangle("bt_objects");
+				if (node.exists(file)) {
+					path.push_back(IFinder::FindResult::value_type(cand[i], file));
+					break;
+				}
+			}
+		}
+	}
+#endif
 /*
 #ifdef __APPLE__
 	{

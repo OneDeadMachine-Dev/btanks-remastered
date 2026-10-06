@@ -54,7 +54,30 @@ extern "C"
 #endif
 	int main(int argc, char *argv[]);
 
+#include <SDL3/SDL_filesystem.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
+//the engine looks for data/ in the current directory: make that independent of
+//where the game was started from (Finder double click, another shell cwd...).
+//dev tree: data/ next to the executable. app bundle: Contents/Resources/data
+static void enter_resource_dir() {
+	const char *base = SDL_GetBasePath();
+	if (base == NULL)
+		return;
+	const std::string dirs[] = { std::string(base) + "../Resources", std::string(base) };
+	for(size_t i = 0; i < sizeof(dirs) / sizeof(dirs[0]); ++i) {
+		struct stat st;
+		if (stat((dirs[i] + "/data").c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+			if (chdir(dirs[i].c_str()) != 0)
+				perror("chdir");
+			return;
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
+	enter_resource_dir();
 	try {
 #ifndef _WINDOWS
 		struct sigaction sa;

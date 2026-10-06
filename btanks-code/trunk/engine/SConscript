@@ -118,6 +118,9 @@ if sys.platform == "win32":
 if sys.platform != 'win32':
 	bt_env.Append(LINKFLAGS=['-Wl,-rpath,'+ lib_dir])
 
+if sys.platform == 'darwin':
+	bt_env.Append(LINKFLAGS=['-Wl,-rpath,@loader_path/../Frameworks'])
+
 bt_main = bt_env.Program('btanks', bt_main_sources, LIBS=bt_main_libs, RPATH=[lib_dir])
 
 if sys.platform == 'win32': 

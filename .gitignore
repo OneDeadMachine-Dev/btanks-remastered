@@ -12,7 +12,10 @@ btanks-code/trunk/options.cache
 *.dylib
 *.a
 
-# built executables (the launcher script in the .app is tracked)
+# packaged app (make-app.sh)
+dist/
+
+# built executables
 btanks-code/trunk/btanks
 btanks-code/trunk/bted
 

@@ -234,6 +234,13 @@ except :
 version = version[version.rfind(':') + 1:]
 revision = int(version.replace('M', ''))
 
+if sys.platform == 'darwin':
+	#relocatable layout: libraries find each other next to themselves (dev tree
+	#and the .app's Frameworks), the executable also looks in ../Frameworks
+	env.Append(SHLINKFLAGS=['-install_name', '@rpath/${TARGET.file}'])
+	if len(env['prefix']) == 0:
+		lib_dir = '@loader_path'
+
 Export('version')
 Export('revision')
 Export('lib_dir')
@@ -267,5 +274,5 @@ env.VariantDir('#/build/' + buildmode + '/engine', 'engine', 0)
 SConscript('#/build/' + buildmode + '/engine/' + 'SConscript')
 
 if len(install_targets) > 0:
-	install_targets.append(env.Command(resources_dir + '/resources.dat', '#/data', 'zip -q -0 -r  $TARGET * -x \*.svn\* -x \*.wav', chdir='data'))
+	install_targets.append(env.Command(resources_dir + '/resources.dat', '#/data', r'zip -q -0 -r  $TARGET * -x \*.svn\* -x \*.wav', chdir='data'))
 	env.Alias('install', install_targets)

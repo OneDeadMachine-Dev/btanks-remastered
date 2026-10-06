@@ -1,6 +1,0 @@
-#!/bin/zsh
-# Battle Tanks Remastered launcher (macOS / Apple Silicon).
-# Путь к игре вычисляется от расположения самого .app — проект можно перемещать.
-APP_DIR="${0:A:h:h:h:h}"
-cd "$APP_DIR/btanks-code/trunk" || exit 1
-exec ./btanks "$@"
