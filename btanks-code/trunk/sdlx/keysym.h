@@ -8,7 +8,7 @@
 #include <SDL3/SDL.h>
 
 struct SDL_keysym {
-	Uint8 scancode;
+	int scancode;
 	SDL_Keycode sym;
 	Uint16 mod;
 	Uint32 unicode;

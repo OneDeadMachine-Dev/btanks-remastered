@@ -57,7 +57,9 @@ public:
 	void init(const int argc, char *argv[]);
 	void createMainWindow();
 	void initSDL();
-	void run(); 
+	void run(); //desktop: runs frames until stopped
+	void start_loop(); //prepares timing; call before the first step()
+	void step(); //one frame (the browser build calls it from its main loop callback)
 	const bool running() const { return _running; }
 	void stop() { _running = false; }
 	void deinit();
@@ -87,6 +89,12 @@ private:
 	int _w, _h;
 	sdlx::Timer _timer;	
 	float _fr;
+
+	void dispatch_event(const SDL_Event *events, const int n, const int i);
+	void debug_dump_frame();
+	int _max_delay;
+	double _sim_step, _accumulator;
+	Uint64 _last_ns;
 };
 
 PUBLIC_SINGLETON(BTANKSAPI, Window, IWindow);

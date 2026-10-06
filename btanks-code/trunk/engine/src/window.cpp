@@ -244,159 +244,170 @@ void IWindow::createMainWindow() {
 	LOG_DEBUG(("created main surface. (%dx%dx%d, renderer: %s)", _w, _h, _window.getBPP(), SDL_GetRendererName(sdlx::Surface::get_renderer())));
 }
 
-void IWindow::run() {
+//first code point of a UTF-8 string (SDL3 delivers typed text as UTF-8)
+static Uint32 first_codepoint(const char *t) {
+	if (t == NULL || t[0] == '\0')
+		return 0;
+	const unsigned char *u = (const unsigned char *)t;
+	if (u[0] < 0x80) return u[0];
+	if ((u[0] & 0xe0) == 0xc0 && u[1]) return ((u[0] & 0x1f) << 6) | (u[1] & 0x3f);
+	if ((u[0] & 0xf0) == 0xe0 && u[1] && u[2]) return ((u[0] & 0x0f) << 12) | ((u[1] & 0x3f) << 6) | (u[2] & 0x3f);
+	if ((u[0] & 0xf8) == 0xf0 && u[1] && u[2] && u[3]) return ((u[0] & 0x07) << 18) | ((u[1] & 0x3f) << 12) | ((u[2] & 0x3f) << 6) | (u[3] & 0x3f);
+	return u[0];
+}
 
+//dispatches one SDL event to the engine's signals
+void IWindow::dispatch_event(const SDL_Event *events, const int n, const int i) {
+	const SDL_Event &event = events[i];
+	event_signal.emit(event);
+
+	switch(event.type) {
+	case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+	case SDL_EVENT_JOYSTICK_BUTTON_UP:
+		joy_button_signal.emit(event.jbutton.which, event.jbutton.button, event.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN);
+	break;
+
+	case SDL_EVENT_KEY_UP:
+	case SDL_EVENT_KEY_DOWN: {
+		SDL_keysym keysym;
+		keysym.scancode = event.key.scancode;
+		keysym.sym = event.key.key;
+		keysym.mod = event.key.mod;
+		if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+			//SDL1.2 keysym.unicode: attach the text of a directly following text input event
+			for (int j = i + 1; j < n; ++j) {
+				if (events[j].type == SDL_EVENT_TEXT_INPUT) {
+					keysym.unicode = first_codepoint(events[j].text.text);
+					break;
+				}
+				if (events[j].type == SDL_EVENT_KEY_DOWN || events[j].type == SDL_EVENT_KEY_UP)
+					break;
+			}
+		}
+		key_signal.emit(keysym, event.type == SDL_EVENT_KEY_DOWN);
+	}
+	break;
+
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
+	case SDL_EVENT_MOUSE_BUTTON_UP:
+		mouse_signal.emit(event.button.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN, (int)event.button.x, (int)event.button.y);
+		break;
+
+	case SDL_EVENT_MOUSE_MOTION:
+		mouse_motion_signal.emit(event.motion.state, (int)event.motion.x, (int)event.motion.y, (int)event.motion.xrel, (int)event.motion.yrel);
+		break;
+
+	case SDL_EVENT_MOUSE_WHEEL: {
+		//translate wheel into SDL1.2-style synthetic buttons 4/5
+		const int button = (event.wheel.y > 0)? SDL_BUTTON_WHEELUP : SDL_BUTTON_WHEELDOWN;
+		mouse_signal.emit(button, true, (int)event.wheel.mouse_x, (int)event.wheel.mouse_y);
+		mouse_signal.emit(button, false, (int)event.wheel.mouse_x, (int)event.wheel.mouse_y);
+	}
+	break;
+
+	case SDL_EVENT_QUIT:
+		_running = false;
+	break;
+	}
+}
+
+//debug aid: BT_DUMP_FRAMES=",120,400," saves those frames as BMP into BT_DUMP_DIR (default /tmp)
+void IWindow::debug_dump_frame() {
+	static const char *frames = getenv("BT_DUMP_FRAMES");
+	if (frames == NULL)
+		return;
+	static int frame_no = 0;
+	const std::string needle = mrt::format_string(",%d,", frame_no);
+	if (strstr(frames, needle.c_str()) != NULL || mrt::format_string("%d", frame_no) == frames) {
+		const char *dir = getenv("BT_DUMP_DIR");
+		const std::string fname = mrt::format_string("%s/bt_frame_%06d.bmp", dir? dir: "/tmp", frame_no);
+		_window.save_bmp(fname); //written by the next flip()
+		LOG_DEBUG(("dumping frame %d to %s", frame_no, fname.c_str()));
+	}
+	++frame_no;
+}
+
+void IWindow::start_loop() {
 	GET_CONFIG_VALUE("engine.fps-limit", int, fps_limit, 100);
 	GET_CONFIG_VALUE("engine.simulation-rate", int, sim_rate, 120);
 	if (sim_rate < 30) sim_rate = 30;
 	if (sim_rate > 480) sim_rate = 480;
 
 	_fr = fps_limit;
-	int max_delay = 1000000 / fps_limit;
-	const double sim_step = 1.0 / sim_rate;
+	_max_delay = 1000000 / fps_limit;
+	_sim_step = 1.0 / sim_rate;
 	LOG_DEBUG(("fps_limit set to %d, maximum frame delay: %d, simulation: %d steps/s%s",
-		fps_limit, max_delay, sim_rate, _vsync_active? ", vsync": ""));
+		fps_limit, _max_delay, sim_rate, _vsync_active? ", vsync": ""));
 
 	//fixed timestep with an accumulator: the simulation result no longer depends
 	//on the frame rate (vsync, 60/120Hz displays, slow frames)
-	Uint64 last_ns = SDL_GetTicksNS();
-	double accumulator = 0;
+	_last_ns = SDL_GetTicksNS();
+	_accumulator = 0;
+}
 
+//one frame: input -> N fixed simulation steps -> render tick -> present.
+//the desktop build calls it in a loop (run()), the browser build from the
+//requestAnimationFrame callback.
+void IWindow::step() {
+	_timer.reset();
+
+	//drain the event queue, then pair key downs with their text input events
 	SDL_Event events[32];
-	while (_running) {
-		_timer.reset();
-
-		//drain the event queue, then pair key downs with their text input
-		//events so the engine's SDL1.2-style keysym.unicode keeps working
-		int n = 0;
-		while (n < (int)(sizeof(events)/sizeof(events[0])) && SDL_PollEvent(&events[n])) {
-			//mouse events arrive in window coordinates: map them into the
-			//renderer's logical (game) coordinate space
-			switch(events[n].type) {
-			case SDL_EVENT_MOUSE_MOTION:
-			case SDL_EVENT_MOUSE_BUTTON_DOWN:
-			case SDL_EVENT_MOUSE_BUTTON_UP:
-			case SDL_EVENT_MOUSE_WHEEL:
-				SDL_ConvertEventToRenderCoordinates(sdlx::Surface::get_renderer(), &events[n]);
-			break;
-			default: break;
-			}
-			++n;
+	int n = 0;
+	while (n < (int)(sizeof(events)/sizeof(events[0])) && SDL_PollEvent(&events[n])) {
+		//mouse events arrive in window coordinates: map them into the
+		//renderer's logical (game) coordinate space
+		switch(events[n].type) {
+		case SDL_EVENT_MOUSE_MOTION:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+		case SDL_EVENT_MOUSE_WHEEL:
+			SDL_ConvertEventToRenderCoordinates(sdlx::Surface::get_renderer(), &events[n]);
+		break;
+		default: break;
 		}
-
-		for (int i = 0; i < n; ++i) {
-			SDL_Event &event = events[i];
-
-			event_signal.emit(event);
-
-			switch(event.type) {
-			case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
-			case SDL_EVENT_JOYSTICK_BUTTON_UP:
-				joy_button_signal.emit(event.jbutton.which, event.jbutton.button, event.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN);
-			break;
-
-			case SDL_EVENT_KEY_UP:
-			case SDL_EVENT_KEY_DOWN: {
-				SDL_keysym keysym;
-				keysym.scancode = (Uint8)event.key.scancode;
-				keysym.sym = event.key.key;
-				keysym.mod = event.key.mod;
-				if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
-					//attach the text from a directly-following text input event
-					for (int j = i + 1; j < n; ++j) {
-						if (events[j].type == SDL_EVENT_TEXT_INPUT) {
-							const char *t = events[j].text.text;
-							if (t != NULL && t[0] != '\0') {
-								unsigned cp = (unsigned char)t[0];
-								if ((cp & 0xe0) == 0xc0 && t[1]) cp = ((cp & 0x1f) << 6) | (t[1] & 0x3f);
-								else if ((cp & 0xf0) == 0xe0 && t[1] && t[2]) cp = ((cp & 0x0f) << 12) | ((t[1] & 0x3f) << 6) | (t[2] & 0x3f);
-								else if ((cp & 0xf8) == 0xf0 && t[1] && t[2] && t[3]) cp = ((cp & 0x07) << 18) | ((t[1] & 0x3f) << 12) | ((t[2] & 0x3f) << 6) | (t[3] & 0x3f);
-								keysym.unicode = cp;
-							}
-							break;
-						}
-						if (events[j].type == SDL_EVENT_KEY_DOWN || events[j].type == SDL_EVENT_KEY_UP)
-							break;
-					}
-				}
-				key_signal.emit(keysym, event.type == SDL_EVENT_KEY_DOWN);
-			}
-			break;
-
-			case SDL_EVENT_MOUSE_BUTTON_DOWN:
-			case SDL_EVENT_MOUSE_BUTTON_UP:
-				mouse_signal.emit(event.button.button, event.type == SDL_EVENT_MOUSE_BUTTON_DOWN, (int)event.button.x, (int)event.button.y);
-				break;
-
-			case SDL_EVENT_MOUSE_MOTION:
-				mouse_motion_signal.emit(event.motion.state, (int)event.motion.x, (int)event.motion.y, (int)event.motion.xrel, (int)event.motion.yrel);
-				break;
-
-			case SDL_EVENT_MOUSE_WHEEL: {
-				//translate wheel into SDL1.2-style synthetic buttons 4/5
-				const int button = (event.wheel.y > 0)? SDL_BUTTON_WHEELUP : SDL_BUTTON_WHEELDOWN;
-				mouse_signal.emit(button, true, (int)event.wheel.mouse_x, (int)event.wheel.mouse_y);
-				mouse_signal.emit(button, false, (int)event.wheel.mouse_x, (int)event.wheel.mouse_y);
-			}
-			break;
-
-			case SDL_EVENT_QUIT:
-				_running = false;
-			break;
-			}
-		}
-
-		const Uint64 now_ns = SDL_GetTicksNS();
-		double elapsed = (now_ns - last_ns) / 1e9;
-		last_ns = now_ns;
-		if (elapsed > 0.1) elapsed = 0.1; //window drag, breakpoint, loading hitch: do not spiral
-		accumulator += elapsed;
-
-		int steps = 0;
-		while (accumulator >= sim_step && steps < 8) {
-			sim_signal.emit((float)sim_step);
-			accumulator -= sim_step;
-			++steps;
-		}
-		if (accumulator >= sim_step)
-			accumulator = 0; //could not catch up: drop the debt
-
-		tick_signal.emit((float)(elapsed > 0.0005? elapsed: 0.0005));
-
-
-		IWindow::flip();
-
-		//temporary debug: dump raw framebuffer contents of given frames
-		{
-			static int frame_no = 0;
-			const char *dump_frames = getenv("BT_DUMP_FRAMES");
-			if (dump_frames != NULL) {
-				if (strstr(dump_frames, (std::string(",").append(mrt::format_string("%d", frame_no)).append(",")).c_str()) != NULL ||
-					strcmp(dump_frames, mrt::format_string("%d", frame_no).c_str()) == 0) {
-					char fname[64];
-					snprintf(fname, sizeof(fname), "/tmp/bt_frame_%06d.bmp", frame_no);
-					_window.save_bmp(fname);
-					LOG_DEBUG(("dumped frame %d to %s", frame_no, fname));
-				}
-				++frame_no;
-			}
-		}
-
-		int t_delta = _timer.microdelta();
-
-#ifdef DEBUG
-		assert(t_delta >= 0);
-#else
-		if (t_delta < 0)
-			t_delta = 0;
-#endif
-		if (!_vsync_active && t_delta < max_delay) {
-			sdlx::Timer::microsleep("fps limit", max_delay - t_delta);
-		}
-
-		t_delta = _timer.microdelta();
-		_fr = (t_delta != 0)? (1000000.0 / t_delta): 1000000;
+		++n;
 	}
+	for (int i = 0; i < n; ++i)
+		dispatch_event(events, n, i);
+
+	const Uint64 now_ns = SDL_GetTicksNS();
+	double elapsed = (now_ns - _last_ns) / 1e9;
+	_last_ns = now_ns;
+	if (elapsed > 0.1) elapsed = 0.1; //window drag, breakpoint, loading hitch: do not spiral
+	_accumulator += elapsed;
+
+	int steps = 0;
+	while (_accumulator >= _sim_step && steps < 8) {
+		sim_signal.emit((float)_sim_step);
+		_accumulator -= _sim_step;
+		++steps;
+	}
+	if (_accumulator >= _sim_step)
+		_accumulator = 0; //could not catch up: drop the debt
+
+	tick_signal.emit((float)(elapsed > 0.0005? elapsed: 0.0005));
+
+	IWindow::flip();
+	debug_dump_frame();
+
+	int t_delta = _timer.microdelta();
+	if (t_delta < 0)
+		t_delta = 0;
+#ifndef __EMSCRIPTEN__
+	//the browser paces frames itself; on desktop vsync does it when available
+	if (!_vsync_active && t_delta < _max_delay)
+		sdlx::Timer::microsleep("fps limit", _max_delay - t_delta);
+#endif
+
+	t_delta = _timer.microdelta();
+	_fr = (t_delta != 0)? (1000000.0 / t_delta): 1000000;
+}
+
+void IWindow::run() {
+	start_loop();
+	while (_running)
+		step();
 	LOG_DEBUG(("exiting main loop."));
 }
 
