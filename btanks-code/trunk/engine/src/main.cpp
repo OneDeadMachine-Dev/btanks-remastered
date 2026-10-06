@@ -29,6 +29,7 @@
 #include "mrt/random.h"
 #include "sdlx/system.h"
 #include "game.h"
+#include "rt_config.h"
 #include <stdlib.h>
 
 #ifdef _WINDOWS
@@ -39,9 +40,11 @@
 #	include <signal.h>
 #	include <stdio.h>
 
+#ifndef __EMSCRIPTEN__
 static void clean_exit(int sno) {
 	Game->stop();
 }
+#endif
 
 #endif
 
@@ -62,6 +65,9 @@ extern "C"
 //where the game was started from (Finder double click, another shell cwd...).
 //dev tree: data/ next to the executable. app bundle: Contents/Resources/data
 static void enter_resource_dir() {
+#ifdef __EMSCRIPTEN__
+	return; //data/ is preloaded into the virtual filesystem root
+#endif
 	const char *base = SDL_GetBasePath();
 	if (base == NULL)
 		return;
@@ -79,7 +85,7 @@ static void enter_resource_dir() {
 int main(int argc, char *argv[]) {
 	enter_resource_dir();
 	try {
-#ifndef _WINDOWS
+#if !defined(_WINDOWS) && !defined(__EMSCRIPTEN__)
 		struct sigaction sa;
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_flags = SA_RESTART;
@@ -94,7 +100,13 @@ int main(int argc, char *argv[]) {
 #endif
 		mrt::init_seed();
 		
+#ifdef __EMSCRIPTEN__
+		//objects are linked statically, there are no sockets in the browser
+		RTConfig->disable_network = true;
+		RTConfig->local_game = true;
+#else
 		Game->loadPlugins();
+#endif
 
 		Game->init(argc, argv);
 		Game->run();

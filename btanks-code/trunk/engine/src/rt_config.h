@@ -53,6 +53,7 @@ public:
 	const std::string release_name;
 	
 	bool disable_donations, disable_network;
+	bool local_game; //no sockets (web build), but a local game from the menu is still possible
 
 	void serialize(mrt::Serializator &s) const;
 	void deserialize(const mrt::Serializator &s);

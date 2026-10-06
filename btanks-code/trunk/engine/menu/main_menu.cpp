@@ -43,15 +43,17 @@ void MainMenu::init() {
 		add(new MenuItem("big", "menu", "start-campaign"), cm);
 	}
 	
-	if (!RTConfig->disable_network) {
+	if (!RTConfig->disable_network || RTConfig->local_game)
 		add(new MenuItem("big", "menu", "start-game"), new StartServerMenu(w, h));
+	if (!RTConfig->disable_network)
 		add(new MenuItem("big", "menu", "join-game"), new JoinServerMenu(w, h));
-	}
 	add(new MenuItem("big", "menu", "options"), new OptionsMenu(w, h));
 	add(new MenuItem("big", "menu", "profiles"), new ProfilesMenu(w, h));
 	
 	add(new MenuItem("big", "menu", "credits"));
-	add(new MenuItem("big", "menu", "quit"));
+#ifndef __EMSCRIPTEN__
+	add(new MenuItem("big", "menu", "quit")); //a browser tab cannot "quit"
+#endif
 
 	int mw, mh;
 	get_size(mw, mh);

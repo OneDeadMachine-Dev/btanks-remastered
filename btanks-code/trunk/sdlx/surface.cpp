@@ -322,6 +322,10 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	if ((flags & Fullscreen) == Fullscreen)
 		wflags |= SDL_WINDOW_FULLSCREEN;
 
+#ifdef __EMSCRIPTEN__
+	//browser: the page's CSS sizes the canvas, SDL follows it
+	wflags |= SDL_WINDOW_RESIZABLE;
+#endif
 	_window = SDL_CreateWindow(_window_title.c_str(), w, h, wflags);
 	if (_window == NULL)
 		throw_sdl(("SDL_CreateWindow(%dx%d)", w, h));
@@ -342,7 +346,12 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	//remaster style): no letterbox bars, more map visible.
 	_logical_w = w;
 	_logical_h = h;
-	if ((flags & Fullscreen) == Fullscreen) {
+#ifdef __EMSCRIPTEN__
+	const bool match_window_aspect = true; //the page decides the aspect
+#else
+	const bool match_window_aspect = (flags & Fullscreen) == Fullscreen;
+#endif
+	if (match_window_aspect) {
 		//the fullscreen switch is asynchronous: wait until it settles and take the
 		//aspect from the real window. on notched MacBooks the window is shorter
 		//than the display, so the desktop display mode gives the wrong aspect

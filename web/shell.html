@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Battle Tanks Remastered</title>
+<style>
+	:root { color-scheme: dark; --bg:#14110d; --fg:#e8d9b0; --accent:#e08a1e; }
+	* { box-sizing: border-box; }
+	html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+		font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+	#host { position: fixed; inset: 0; background: #000; }
+	canvas { display: block; width: 100% !important; height: 100% !important; background: #000; outline: none; }
+	#fps { position: fixed; top: 6px; right: 8px; z-index: 3; padding: 2px 8px; border-radius: 4px; font: 12px/1.4 ui-monospace, monospace;
+		background: rgba(0,0,0,.55); color: #9f9; pointer-events: none; }
+	#loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 14px; text-align: center;
+		background: var(--bg); z-index: 2; padding: 24px; }
+	#loading h1 { margin: 0; font-size: clamp(22px, 5vw, 38px); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+	#loading p { margin: 0; opacity: .75; min-height: 1.4em; }
+	#bar { width: min(420px, 80vw); height: 8px; border-radius: 4px; background: #2b241a; overflow: hidden; margin: 0 auto; }
+	#bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+	#loading.done { display: none; }
+</style>
+</head>
+<body>
+<div id="host"><canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas></div>
+<div id="fps" hidden></div>
+<div id="loading" role="status" aria-live="polite">
+	<h1>Battle Tanks</h1>
+	<div id="bar"><i id="fill"></i></div>
+	<p id="status">Загрузка…</p>
+</div>
+<script>
+	const statusEl = document.getElementById('status'), fill = document.getElementById('fill'), loading = document.getElementById('loading');
+	//?args=--no-sound,--map=arena : command line for the game
+	const urlArgs = (new URLSearchParams(location.search).get('args') || '').split(',').filter(Boolean);
+	var Module = {
+		arguments: urlArgs,
+		canvas: document.getElementById('canvas'),
+		print: (t) => console.log(t),
+		printErr: (t) => console.warn(t),
+		setStatus(text) {
+			const m = /^(.+?) \((\d+(?:\.\d+)?)\/(\d+)\)$/.exec(text || '');
+			if (m) { fill.style.width = (100 * m[2] / m[3]) + '%'; statusEl.textContent = 'Загрузка данных…'; }
+			else if (text) statusEl.textContent = text;
+		},
+		monitorRunDependencies(left) { if (left === 0) { statusEl.textContent = 'Запуск…'; } },
+		postRun: [() => { loading.classList.add('done'); Module.canvas.focus(); }],
+		onAbort(what) { statusEl.textContent = 'Ошибка: ' + what; loading.classList.remove('done'); },
+	};
+	//?fps shows the browser's real frame rate (requestAnimationFrame), useful for performance reports
+	if (new URLSearchParams(location.search).has('fps')) {
+		const el = document.getElementById('fps'); el.hidden = false;
+		let n = 0, t0 = performance.now();
+		(function tick() { n++; const t = performance.now(); if (t - t0 >= 1000) { el.textContent = Math.round(n * 1000 / (t - t0)) + ' fps'; n = 0; t0 = t; } requestAnimationFrame(tick); })();
+	}
+	window.addEventListener('error', () => { statusEl.textContent = 'Что-то пошло не так. Подробности в консоли.'; });
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

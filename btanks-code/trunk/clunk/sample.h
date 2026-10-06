@@ -20,7 +20,7 @@
 */
 
 
-#include <SDL_audio.h>
+#include <SDL3/SDL_audio.h>
 #include "export_clunk.h"
 #include "buffer.h"
 

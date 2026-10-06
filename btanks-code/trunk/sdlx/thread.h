@@ -21,7 +21,8 @@
 
 
 #include "sdlx.h"
-#include <SDL_thread.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_mutex.h>
 #include "semaphore.h"
 
 int sdlx_thread_starter(void *o);

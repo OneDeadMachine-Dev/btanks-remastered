@@ -26,3 +26,6 @@ btanks-code/trunk/bted
 .zcode/
 .zcodeignore
 bt_frame_*.bmp
+
+# web build
+build-web/

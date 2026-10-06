@@ -46,6 +46,9 @@
 #include "mrt/random.h"
 #include "mrt/fs_node.h"
 #include <SDL3/SDL_filesystem.h>
+#ifdef __EMSCRIPTEN__
+#	include <emscripten.h>
+#endif
 #include "mrt/directory.h"
 
 #include "sdlx/system.h"
@@ -101,7 +104,7 @@ IGame::IGame() : _main_menu(NULL),
 	path = mrt::Directory::get_app_dir("Battle Tanks", "btanks") + "/";
 	Config->load(path + "bt.xml");
 
-#ifndef _WINDOWS
+#if !defined(_WINDOWS) && !defined(__EMSCRIPTEN__) //browser: keep logging to the console (stderr)
 	std::string log;
 	Config->get("engine.log", log, "log");
 	if (!log.empty() && log != "stderr" && log != "<stderr>" ) {
@@ -126,7 +129,19 @@ void IGame::stop() {
 
 void IGame::run() {
 	if (!RTConfig->server_mode) {
+#ifdef __EMSCRIPTEN__
+		//the browser owns the loop: one Window->step() per animation frame
+		Window->start_loop();
+		emscripten_set_main_loop_arg([](void *) {
+			if (!Window->running()) {
+				emscripten_cancel_main_loop();
+				return;
+			}
+			Window->step();
+		}, NULL, 0, 1);
+#else
 		Window->run();
+#endif
 	} else {
 		server_running = true;
 		LOG_DEBUG(("server is up and running!"));
@@ -1198,6 +1213,9 @@ void IGame::onMap() {
 #include "sdlx/module.h"
 
 void IGame::loadPlugins() {
+#ifdef __EMSCRIPTEN__
+	return; //statically linked
+#endif
 	LOG_DEBUG(("loading plugins..."));
 	IFinder::FindResult path;
 	std::string plugin = std::string("../") + sdlx::Module::mangle("bt_objects");

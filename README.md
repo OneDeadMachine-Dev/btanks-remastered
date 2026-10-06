@@ -13,6 +13,15 @@ brew install sdl3 libvorbis expat scons pkgconf
 
 Игра сама находит данные (`data/`) и библиотеки рядом с бинарником или внутри `.app`, поэтому текущая папка не важна. Приложение подписано ad-hoc: оно запускается на этом Mac. Чтобы раздавать другим, нужны Apple Developer ID и нотаризация.
 
+## Веб-версия
+
+```sh
+brew install emscripten cmake ninja
+./make-web.sh serve     # сборка в build-web/out и сервер на http://localhost:8765/index.html?fps
+```
+
+Весь движок, объекты, звук, Lua и expat линкуются статически в один wasm (WebGL2 через SDL3). Данные (30 МБ) упаковываются в `index.data`. Сеть в браузере отключена, доступны одиночная игра и кампании. Параметры страницы: `?fps` — счётчик кадров, `?args=--no-sound` — аргументы игры.
+
 ## Структура
 
 | Путь | Что это |
@@ -24,6 +33,7 @@ brew install sdl3 libvorbis expat scons pkgconf
 | `btanks-code/trunk/mrt` | утилиты (строки, XML, сокеты, файлы) |
 | `btanks-code/trunk/third_party/lua` | Lua 5.1.5 (MIT) |
 | `btanks-code/trunk/data` | ресурсы: карты, тайлы, звуки, музыка |
+| `web` | CMake-сборка под Emscripten и HTML-оболочка страницы |
 | `btanks-code/trunk/editor` | редактор карт (пока на SDL 1.2, не собирается) |
 | `btanks-code/branches` | старые ветки svn, для справки |
 | `packaging/macos` | шаблон Info.plist и иконка для `make-app.sh` |
@@ -36,7 +46,7 @@ brew install sdl3 libvorbis expat scons pkgconf
 - [x] Этап 3 — рендер: атлас текстур (тайлы, пули, частицы), затухание объектов через alpha-mod на GPU
 - [x] Этап 4 — фиксированный шаг симуляции 120 Гц (независимость от FPS), рабочий vsync
 - [x] Этап 5 — `@rpath` для dylib, самодостаточный `.app` (`make-app.sh`), запуск из любого места
-- [ ] Этап 6 — Emscripten/WebGL: статический `bt_objects`, `main loop` без блокировки, офлайн-синглплеер
+- [x] Этап 6 — Emscripten/WebGL: игра запускается и играется в браузере (синглплеер). Осталось: производительность звука в вебе, сохранение настроек (IndexedDB), мобильное управление
 - [ ] Этап 7 — редактор карт на SDL3, интро-видео, мультиплеер в вебе (WebSocket)
 
 ## Лицензия
