@@ -12,7 +12,7 @@ env.Append(CPPDEFINES=['SDLXAPI=DLLEXPORT'])
 
 env.MergeFlags(sdl_cflags, sdl_libs)
 
-libs = ['mrt', 'SDL3', 'SDL3_image']
+libs = ['mrt', 'SDL3']
 
 c_map_env= env.Clone()
 c_map = c_map_env.SharedObject('c_map.cpp')

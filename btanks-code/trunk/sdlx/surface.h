@@ -83,10 +83,9 @@ namespace sdlx {
 
 		void load_bmp(const std::string &fname);
 		void save_bmp(const std::string &fname) const;
-#ifndef NO_SDL_IMAGE
+		//PNG and JPEG (stb_image)
 		void load_image(const std::string &fname);
 		void load_image(const mrt::Chunk &memory);
-#endif
 		/*
 		 Quote from manual :
 		 "Only the position is used in the dstrect (the width and height are

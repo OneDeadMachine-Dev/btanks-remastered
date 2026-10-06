@@ -136,9 +136,6 @@ if not conf.CheckLibWithHeader('SDL3', 'SDL3/SDL.h', 'c++'):
 Export('sdl_cflags')
 Export('sdl_libs')
 
-if not conf.CheckLibWithHeader('SDL3_image', 'SDL3_image/SDL_image.h', 'c++'):
-	Exit(1)
-
 if not conf.CheckLibWithHeader('vorbisfile', 'vorbis/vorbisfile.h', 'c++'):
 	Exit(1)
 
@@ -250,7 +247,7 @@ version = '0.9.%s' %version
 print("version: %s" %version)
 
 bt_sublibs = ['third_party/lua', 'mrt', 'sdlx', 'objects', 'clunk']
-env.Append(CPPPATH=['#', '#/third_party/lua'])
+env.Append(CPPPATH=['#', '#/third_party/lua', '#/third_party/stb'])
 
 if (os.path.exists('private')):
 	dir = 'private'

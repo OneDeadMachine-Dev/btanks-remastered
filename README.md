@@ -5,7 +5,7 @@
 ## Сборка и запуск (macOS)
 
 ```sh
-brew install sdl3 sdl3_image libvorbis expat scons pkgconf
+brew install sdl3 libvorbis expat scons pkgconf
 ./build-mac.sh      # собирает всё в btanks-code/trunk (Lua 5.1 вшит в third_party/lua)
 ./run-mac.sh        # запуск из дерева разработки, откуда угодно
 ./make-app.sh       # самодостаточный dist/"Battle Tanks.app" (52 МБ, все dylib внутри)

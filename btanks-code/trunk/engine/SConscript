@@ -74,7 +74,7 @@ vorbis = 'vorbisfile'
 if debug and sys.platform == "win32": 
 	vorbis = 'vorbisfile_d'
 
-bt_libs = ['mrt', 'sdlx', 'SDL3', 'SDL3_image', vorbis, 'clunk']
+bt_libs = ['mrt', 'sdlx', 'SDL3', vorbis, 'clunk']
 
 if sys.platform != 'win32':
 	#lua 5.1 is vendored in third_party/lua

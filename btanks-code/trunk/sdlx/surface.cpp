@@ -10,6 +10,7 @@
 
 #include "surface.h"
 #include "sdl_ex.h"
+#include <string.h>
 #include <SDL3/SDL_render.h>
 #include <map>
 #include <unordered_map>
@@ -469,27 +470,52 @@ void Surface::save_bmp(const std::string &fname)  const {
 }
 
 
-#ifndef NO_SDL_IMAGE
+//PNG/JPEG decoding via stb_image (the game ships only these two formats)
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#define STBI_NO_STDIO
+#define STBI_NO_LINEAR
+#define STBI_NO_HDR
+#define STBI_NO_FAILURE_STRINGS
+#include "stb_image.h"
+
+static SDL_Surface * decode_image(const unsigned char *data, size_t size) {
+	int w = 0, h = 0, channels = 0;
+	if (!stbi_info_from_memory(data, (int)size, &w, &h, &channels))
+		return NULL;
+	//opaque images stay 24-bit (like SDL_image returned them), the rest become RGBA
+	const int want = (channels == 3)? 3: 4;
+	unsigned char *pixels = stbi_load_from_memory(data, (int)size, &w, &h, &channels, want);
+	if (pixels == NULL)
+		return NULL;
+	SDL_Surface *s = SDL_CreateSurface(w, h, (want == 3)? SDL_PIXELFORMAT_RGB24: SDL_PIXELFORMAT_RGBA32);
+	if (s != NULL) {
+		for(int y = 0; y < h; ++y)
+			memcpy((Uint8 *)s->pixels + y * s->pitch, pixels + (size_t)y * w * want, (size_t)w * want);
+	}
+	stbi_image_free(pixels);
+	return s;
+}
 
 void Surface::load_image(const std::string &str) {
-    free();
-    if ((surface = IMG_Load(str.c_str())) == NULL ) throw_sdl(("IMG_Load"));
+	free();
+	size_t size = 0;
+	void *data = SDL_LoadFile(str.c_str(), &size);
+	if (data == NULL)
+		throw_sdl(("SDL_LoadFile(%s)", str.c_str()));
+	surface = decode_image((const unsigned char *)data, size);
+	SDL_free(data);
+	if (surface == NULL)
+		throw_ex(("cannot decode image '%s' (only PNG and JPEG are supported)", str.c_str()));
 }
 
 void Surface::load_image(const mrt::Chunk &memory) {
 	free();
-	SDL_IOStream *op = SDL_IOFromMem(memory.get_ptr(), memory.get_size());
-	if (op == NULL) throw_sdl(("SDL_IOFromMem"));
-	try {
-		surface = IMG_Load_IO(op, false);
-		SDL_CloseIO(op);
-		op = NULL;
-		if (surface == NULL)
-			throw_sdl(("IMG_Load_IO"));
-	} CATCH("load_image", {SDL_CloseIO(op); throw;})
+	surface = decode_image((const unsigned char *)memory.get_ptr(), memory.get_size());
+	if (surface == NULL)
+		throw_ex(("cannot decode image from memory (only PNG and JPEG are supported)"));
 }
-
-#endif
 
 
 void Surface::blit(const Surface &from, const int x, const int y) {
