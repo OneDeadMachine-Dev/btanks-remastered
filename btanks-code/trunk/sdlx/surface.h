@@ -124,6 +124,12 @@ namespace sdlx {
 		bool get_color_key(Uint32 &key) const;
 		void set_color_key(Uint32 key, Uint32 flag = ColorKey);
 		void set_alpha(Uint8 alpha, Uint32 flags = Alpha);
+		//SDL1.2 SDL_SRCALPHA on/off for surfaces with a per-pixel alpha channel:
+		//blend=false makes blits copy pixels (alpha included), blend=true restores
+		//normal alpha blending. does not touch the modulation value.
+		void set_blend(bool blend);
+		//pure modulation (fade): multiplies the per-pixel alpha, blend mode is kept
+		void set_alpha_mod(Uint8 alpha);
 		void display_format_alpha();
 		void display_format();
 
@@ -159,9 +165,11 @@ namespace sdlx {
 		SDL_BlendMode _blend;
 		static int default_flags;
 
-		static SDL_Texture *get_texture(const Surface &src);
+		//resolves the GPU texture (small surfaces live in shared atlases) and the
+		//source rect of the whole surface inside it
+		static SDL_Texture *get_texture(const Surface &src, SDL_FRect &rect);
 		static void apply_texture_state(SDL_Texture *t, const Surface &src);
-		static void destroy_texture(SDL_Surface *key);
+		static void release_texture(SDL_Surface *key);
 	};
 }
 

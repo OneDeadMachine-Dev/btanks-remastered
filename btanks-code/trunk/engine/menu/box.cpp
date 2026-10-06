@@ -112,7 +112,7 @@ void Box::init(const std::string &tile, int _w, int _h, int hl_h) {
 
 	sdlx::Surface * foo = const_cast<sdlx::Surface *>(_surface);
 	assert(foo != NULL);
-	foo->set_alpha(0,0);
+	foo->set_blend(false);
 
 	sdlx::Rect u (x1,	0,	x2 - x1,	 					y1);
 	sdlx::Rect cl(0,	y1, x1, 							y2 - y1);
@@ -138,7 +138,7 @@ void Box::init(const std::string &tile, int _w, int _h, int hl_h) {
 		}
 	}
 	
-	foo->set_alpha(255);
+	foo->set_blend(true);
 
 	if (hl_h > 0) {
 		_highlight.create_rgb(w, hl_h, 32);
@@ -234,9 +234,9 @@ void Box::render(sdlx::Surface &surface, const int x0, const int y0) const {
 
 void Box::copyTo(sdlx::Surface &surface, const int x, const int y) {
 	//terrible terrible hack. do not try it at home.
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0,0);
+	const_cast<sdlx::Surface *>(_surface)->set_blend(false);
 	render(surface, x, y);
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0);
+	const_cast<sdlx::Surface *>(_surface)->set_blend(true);
 }
 
 

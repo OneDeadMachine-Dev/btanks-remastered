@@ -497,50 +497,11 @@ void Object::render(sdlx::Surface &surface, const int x_, const int y_) {
 		return;
 	} 
 	
-	//fade out feature.
-	alpha = 255 - alpha;
-	
-	GET_CONFIG_VALUE("engine.fadeout-strip-alpha-bits", int, strip_alpha_bits, 4);
-	alpha &= ~((1 << strip_alpha_bits) - 1);
-	
-	if (_fadeout_surface != NULL && alpha == _fadeout_alpha) {
-		surface.blit(*_fadeout_surface, x, y);
-		//LOG_DEBUG(("skipped all fadeout stuff"));
-		return;
-	}
-	_fadeout_alpha = alpha;
-	
-	if (_fadeout_surface == NULL) {
-		_fadeout_surface = new sdlx::Surface;
-		_fadeout_surface->create_rgb(_tw, _th, 32, sdlx::Surface::Software);
-		_fadeout_surface->display_format_alpha();
-	}
-	
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0,0);
-	_fadeout_surface->blit(*_surface, src);
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0);
-
-	SDL_Surface *s = _fadeout_surface->get_sdl_surface();
-	assert(SDL_BYTESPERPIXEL(s->format) > 2);
-
-	_fadeout_surface->lock();
-	//optimize it.
-	Uint32 *p = (Uint32 *)s->pixels;
-	int size = s->h * s->pitch / 4;
-	for(int i = 0; i < size; ++i) {
-		Uint8 r, g, b, a;
-		_fadeout_surface->get_rgba(*p, r, g, b, a);
-		if (a == 0) {
-			++p;
-			continue;
-		}
-		a = (((int)a) * alpha) / 255;
-		*p++ = _fadeout_surface->map_rgba(r, g, b, a);
-	}
-	_fadeout_surface->unlock();
-
-	surface.blit(*_fadeout_surface, x, y);
-
+	//fade out: GPU alpha modulation of the (shared) sprite sheet
+	sdlx::Surface *sheet = const_cast<sdlx::Surface *>(_surface);
+	sheet->set_alpha_mod(255 - alpha);
+	surface.blit(*sheet, src, x, y);
+	sheet->set_alpha_mod(255);
 }
 
 const bool Object::collides(const Object *other, const int x, const int y, const bool hidden_by_other) const {

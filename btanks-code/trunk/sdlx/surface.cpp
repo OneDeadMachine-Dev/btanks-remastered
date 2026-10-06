@@ -12,6 +12,9 @@
 #include "sdl_ex.h"
 #include <SDL3/SDL_render.h>
 #include <map>
+#include <unordered_map>
+#include <vector>
+#include <algorithm>
 #include "mrt/chunk.h"
 
 using namespace sdlx;
@@ -27,9 +30,37 @@ static SDL_Surface *_screen_surface = NULL; //1x1 format holder, marks the scree
 static int _logical_w = 0, _logical_h = 0;
 static std::string _window_title = "Battle Tanks";
 
-//texture cache keyed by the source SDL_Surface pointer
-typedef std::map<SDL_Surface *, SDL_Texture *> TextureCache;
+//GPU texture cache keyed by the source SDL_Surface pointer.
+//small surfaces (map tiles, bullets, particles) are packed into shared atlas
+//textures so the renderer can batch hundreds of blits into a single draw call;
+//a 1px extruded border around every slot prevents sampling neighbours when the
+//frame is scaled to the window. larger surfaces get a texture of their own.
+struct TexEntry {
+	SDL_Texture *texture;
+	SDL_FRect rect; //whole-surface rect inside the texture
+	bool atlas;
+	bool dirty; //atlas entries are re-uploaded lazily
+};
+typedef std::unordered_map<SDL_Surface *, TexEntry> TextureCache;
 static TextureCache _textures;
+
+struct Atlas {
+	SDL_Texture *texture;
+	int x, y, row_h; //shelf packer cursor
+};
+static std::vector<Atlas> _atlases;
+//slots of freed surfaces, reused by surfaces of the same size (rotozoom caches
+//and other short-lived sprites would otherwise eat the atlas)
+struct Slot {
+	SDL_Texture *texture;
+	SDL_FRect rect;
+};
+static std::map<std::pair<int, int>, std::vector<Slot> > _free_slots;
+
+static const int ATLAS_SIZE_MAX = 2048;
+static const int ATLAS_MAX_SPRITE = 64;
+static const int ATLAS_PAD = 1;
+static int _atlas_size = ATLAS_SIZE_MAX;
 
 
 SDL_Window * Surface::get_window() { return _window; }
@@ -43,9 +74,14 @@ void Surface::set_window_title(const std::string &title) {
 
 static void destroy_screen() {
 	for(TextureCache::iterator i = _textures.begin(); i != _textures.end(); ++i) {
-		SDL_DestroyTexture(i->second);
+		if (!i->second.atlas)
+			SDL_DestroyTexture(i->second.texture);
 	}
 	_textures.clear();
+	for(size_t i = 0; i < _atlases.size(); ++i)
+		SDL_DestroyTexture(_atlases[i].texture);
+	_atlases.clear();
+	_free_slots.clear();
 	_screen_surface = NULL;
 	_logical_w = _logical_h = 0;
 	if (_renderer != NULL) {
@@ -138,31 +174,133 @@ void Surface::convert(Uint32 flags) {
 	assign(x);
 }
 
-//texture cache keyed by the source SDL_Surface pointer
+//converts to ARGB8888 and uploads into the texture rect, extruding the border
+static void upload_padded(SDL_Texture *tex, SDL_Surface *src, const SDL_FRect &slot, bool pad) {
+	SDL_Surface *conv = src;
+	if (src->format != SDL_PIXELFORMAT_ARGB8888) {
+		conv = SDL_ConvertSurface(src, SDL_PIXELFORMAT_ARGB8888);
+		if (conv == NULL)
+			throw_sdl(("SDL_ConvertSurface(ARGB8888)"));
+	}
+	const int w = conv->w, h = conv->h, p = pad? ATLAS_PAD: 0;
+	const int bw = w + 2 * p, bh = h + 2 * p;
+	std::vector<Uint32> buf(bw * bh);
+	for(int y = 0; y < bh; ++y) {
+		const int sy = std::min(std::max(y - p, 0), h - 1);
+		const Uint32 *row = (const Uint32 *)((const Uint8 *)conv->pixels + sy * conv->pitch);
+		for(int x = 0; x < bw; ++x)
+			buf[y * bw + x] = row[std::min(std::max(x - p, 0), w - 1)];
+	}
+	const SDL_Rect r = { (int)slot.x - p, (int)slot.y - p, bw, bh };
+	const bool ok = SDL_UpdateTexture(tex, &r, &buf[0], bw * 4);
+	if (conv != src)
+		SDL_DestroySurface(conv);
+	if (!ok)
+		throw_sdl(("SDL_UpdateTexture"));
+}
 
-SDL_Texture * Surface::get_texture(const Surface &src) {
-	TextureCache::iterator i = _textures.find(src.surface);
-	if (i != _textures.end())
-		return i->second;
-
-	SDL_Texture *t = SDL_CreateTextureFromSurface(_renderer, src.surface);
+static SDL_Texture * make_texture(int w, int h, SDL_TextureAccess access) {
+	SDL_Texture *t = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_ARGB8888, access, w, h);
 	if (t == NULL)
-		throw_sdl(("SDL_CreateTextureFromSurface"));
+		throw_sdl(("SDL_CreateTexture(%d, %d)", w, h));
 	SDL_SetTextureScaleMode(t, SDL_SCALEMODE_NEAREST);
-	_textures[src.surface] = t;
 	return t;
 }
 
-void Surface::destroy_texture(SDL_Surface *key) {
+SDL_Texture * Surface::get_texture(const Surface &src, SDL_FRect &rect) {
+	TextureCache::iterator i = _textures.find(src.surface);
+	if (i != _textures.end()) {
+		TexEntry &e = i->second;
+		if (e.dirty) {
+			upload_padded(e.texture, src.surface, e.rect, true);
+			e.dirty = false;
+		}
+		rect = e.rect;
+		return e.texture;
+	}
+
+	TexEntry e;
+	e.dirty = false;
+	const int w = src.surface->w, h = src.surface->h;
+	const bool small = w <= ATLAS_MAX_SPRITE && h <= ATLAS_MAX_SPRITE && w > 0 && h > 0 &&
+		!SDL_SurfaceHasColorKey(src.surface);
+	if (small) {
+		const int sw = w + 2 * ATLAS_PAD, sh = h + 2 * ATLAS_PAD;
+		e.atlas = true;
+		std::vector<Slot> &fl = _free_slots[std::make_pair(w, h)];
+		if (!fl.empty()) {
+			e.texture = fl.back().texture;
+			e.rect = fl.back().rect;
+			fl.pop_back();
+			upload_padded(e.texture, src.surface, e.rect, true);
+			_textures[src.surface] = e;
+			rect = e.rect;
+			return e.texture;
+		}
+		Atlas *a = _atlases.empty()? NULL: &_atlases.back();
+		if (a != NULL) {
+			if (a->x + sw > _atlas_size) { //next shelf
+				a->y += a->row_h;
+				a->x = 0;
+				a->row_h = 0;
+			}
+			if (a->y + sh > _atlas_size)
+				a = NULL;
+		}
+		if (a == NULL) {
+			Atlas na = { make_texture(_atlas_size, _atlas_size, SDL_TEXTUREACCESS_STATIC), 0, 0, 0 };
+			SDL_SetTextureBlendMode(na.texture, SDL_BLENDMODE_BLEND);
+			_atlases.push_back(na);
+			a = &_atlases.back();
+		}
+		e.texture = a->texture;
+		e.rect.x = (float)(a->x + ATLAS_PAD);
+		e.rect.y = (float)(a->y + ATLAS_PAD);
+		e.rect.w = (float)w;
+		e.rect.h = (float)h;
+		a->x += sw;
+		a->row_h = std::max(a->row_h, sh);
+		upload_padded(e.texture, src.surface, e.rect, true);
+	} else {
+		e.atlas = false;
+		SDL_Texture *t = SDL_CreateTextureFromSurface(_renderer, src.surface);
+		if (t == NULL)
+			throw_sdl(("SDL_CreateTextureFromSurface"));
+		SDL_SetTextureScaleMode(t, SDL_SCALEMODE_NEAREST);
+		e.texture = t;
+		e.rect.x = e.rect.y = 0;
+		e.rect.w = (float)w;
+		e.rect.h = (float)h;
+	}
+	_textures[src.surface] = e;
+	rect = e.rect;
+	return e.texture;
+}
+
+//the surface is going away: drop its texture
+void Surface::release_texture(SDL_Surface *key) {
 	TextureCache::iterator i = _textures.find(key);
 	if (i == _textures.end())
 		return;
-	SDL_DestroyTexture(i->second);
+	if (i->second.atlas) {
+		Slot slot = { i->second.texture, i->second.rect };
+		_free_slots[std::make_pair((int)slot.rect.w, (int)slot.rect.h)].push_back(slot);
+	} else
+		SDL_DestroyTexture(i->second.texture);
 	_textures.erase(i);
 }
 
+//pixels changed: refresh the texture on next use
 void Surface::mark_dirty() const {
-	destroy_texture(surface);
+	TextureCache::iterator i = _textures.find(surface);
+	if (i == _textures.end())
+		return;
+	if (i->second.atlas) {
+		i->second.dirty = true;
+		return;
+	}
+	SDL_DestroyTexture(i->second.texture);
+	_textures.erase(i);
 }
 
 void Surface::apply_texture_state(SDL_Texture *t, const Surface &src) {
@@ -352,10 +490,11 @@ void Surface::load_image(const mrt::Chunk &memory) {
 
 void Surface::blit(const Surface &from, const int x, const int y) {
 	if (surface == _screen_surface) {
-		SDL_Texture *t = get_texture(from);
+		SDL_FRect src;
+		SDL_Texture *t = get_texture(from, src);
 		apply_texture_state(t, from);
-		const SDL_FRect dst = { (float)x, (float)y, (float)from.surface->w, (float)from.surface->h };
-		SDL_RenderTexture(_renderer, t, NULL, &dst);
+		const SDL_FRect dst = { (float)x, (float)y, src.w, src.h };
+		SDL_RenderTexture(_renderer, t, &src, &dst);
 		return;
 	}
 
@@ -371,10 +510,18 @@ void Surface::blit(const Surface &from, const int x, const int y) {
 
 void Surface::blit(const Surface &from, const Rect &fromRect, const int x, const int y) {
 	if (surface == _screen_surface) {
-		SDL_Texture *t = get_texture(from);
+		SDL_FRect whole;
+		SDL_Texture *t = get_texture(from, whole);
 		apply_texture_state(t, from);
-		const SDL_FRect src = { (float)fromRect.x, (float)fromRect.y, (float)fromRect.w, (float)fromRect.h };
-		const SDL_FRect dst = { (float)x, (float)y, (float)fromRect.w, (float)fromRect.h };
+		//clip the source rect to the surface like SDL_BlitSurface does: inside
+		//an atlas an out-of-range rect would show neighbouring sprites
+		int sx0 = std::max((int)fromRect.x, 0), sy0 = std::max((int)fromRect.y, 0);
+		int sx1 = std::min((int)fromRect.x + (int)fromRect.w, (int)whole.w);
+		int sy1 = std::min((int)fromRect.y + (int)fromRect.h, (int)whole.h);
+		if (sx1 <= sx0 || sy1 <= sy0)
+			return;
+		const SDL_FRect src = { whole.x + sx0, whole.y + sy0, (float)(sx1 - sx0), (float)(sy1 - sy0) };
+		const SDL_FRect dst = { (float)(x + sx0 - fromRect.x), (float)(y + sy0 - fromRect.y), src.w, src.h };
 		SDL_RenderTexture(_renderer, t, &src, &dst);
 		return;
 	}
@@ -466,6 +613,18 @@ void Surface::set_alpha(Uint8 alpha, Uint32 flags) {
 	}
 }
 
+void Surface::set_blend(bool blend) {
+	_blend = blend? SDL_BLENDMODE_BLEND: SDL_BLENDMODE_NONE;
+	if (!SDL_SetSurfaceBlendMode(surface, _blend))
+		throw_sdl(("SDL_SetSurfaceBlendMode"));
+}
+
+void Surface::set_alpha_mod(Uint8 alpha) {
+	_alpha = alpha;
+	if (!SDL_SetSurfaceAlphaMod(surface, alpha))
+		throw_sdl(("SDL_SetSurfaceAlphaMod"));
+}
+
 void Surface::display_format_alpha() {
 	convert();
 	//SDL_DisplayFormatAlpha set SDL_SRCALPHA: blits from the surface alpha-blend
@@ -488,7 +647,7 @@ void Surface::free() {
 	if (surface == NULL) return;
 	if (surface == _screen_surface)
 		destroy_screen();
-	mark_dirty();
+	release_texture(surface);
 	SDL_DestroySurface(surface);
 	surface = NULL;
 }

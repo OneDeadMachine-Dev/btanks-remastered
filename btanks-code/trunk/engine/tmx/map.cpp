@@ -1368,7 +1368,7 @@ void IMap::deserialize(const mrt::Serializator &s) {
 const int IMap::addTiles(const sdlx::Surface *image, const int first_gid) {
 	int id = 0;
 TRY {
-	const_cast<sdlx::Surface *>(image)->set_alpha(0, 0);
+	const_cast<sdlx::Surface *>(image)->set_blend(false);
 	int w = image->get_width(), h = image->get_height();
 
 	for(int y = 0; y < h; y += _th) {
@@ -1429,8 +1429,8 @@ TRY {
 			s = NULL;
 		}
 	}
-	const_cast<sdlx::Surface *>(image)->set_alpha(0, sdlx::Surface::Alpha);	//fixme: dangerous
-} CATCH("addTiles", {const_cast<sdlx::Surface *>(image)->set_alpha(0, sdlx::Surface::Alpha); throw; })
+	const_cast<sdlx::Surface *>(image)->set_blend(true);	//fixme: dangerous
+} CATCH("addTiles", {const_cast<sdlx::Surface *>(image)->set_blend(true); throw; })
 	return id;
 }
 

@@ -74,9 +74,9 @@ void RotatingObject::render(sdlx::Surface &surface, const int x, const int y) {
 		src_surface->display_format_alpha();
 	}
 
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0,0);
+	const_cast<sdlx::Surface *>(_surface)->set_blend(false);
 	Object::render(*src_surface, 0, 0); 
-	const_cast<sdlx::Surface *>(_surface)->set_alpha(0);
+	const_cast<sdlx::Surface *>(_surface)->set_blend(true);
 
 	cached_surface->rotozoom(*src_surface, dd * 180 / M_PI, 1, true);
 	cached_angle = angle;
