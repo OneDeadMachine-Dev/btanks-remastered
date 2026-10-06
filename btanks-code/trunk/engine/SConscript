@@ -77,18 +77,8 @@ if debug and sys.platform == "win32":
 bt_libs = ['mrt', 'sdlx', 'SDL3', 'SDL3_image', vorbis, 'clunk']
 
 if sys.platform != 'win32':
-	got_lua = False
-	for lua in ['lua5.1', 'lua5.0', 'lua']: 
-		try: 
-			env.ParseConfig("pkg-config --cflags --libs %s 2>/dev/null" %lua);
-			got_lua = True
-			env.Append(CPPDEFINES=['ENABLE_LUA'])
-			bt_libs.append(lua)
-			break
-		except: 
-			continue
-	if not got_lua: 
-		raise Exception("Cannot find lua5.1/lua5.0 or lua pkg-config information")
+	#lua 5.1 is vendored in third_party/lua
+	bt_libs.append('lua')
 
 env.Append(CPPDEFINES=['ENABLE_LUA'])
 bt_sources.append('luaxx/state.cpp')

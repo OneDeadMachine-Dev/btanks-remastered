@@ -1,0 +1,9 @@
+# Lua 5.1.5 (MIT), vendored so the build does not depend on external prefixes.
+Import('env')
+
+lua_env = env.Clone()
+lua_env.Append(CPPDEFINES=['LUA_USE_POSIX'])
+# third-party C code: do not apply the engine's -pedantic
+lua_env['CCFLAGS'] = [f for f in lua_env['CCFLAGS'] if f not in ('-pedantic', '-Wall')]
+
+lua_env.StaticLibrary('lua', Glob('*.c'))

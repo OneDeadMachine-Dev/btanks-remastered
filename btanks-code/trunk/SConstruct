@@ -242,8 +242,8 @@ Export('plugins_dir')
 version = '0.9.%s' %version
 print("version: %s" %version)
 
-bt_sublibs = ['mrt', 'sdlx', 'objects', 'clunk']
-env.Append(CPPPATH=['#'])
+bt_sublibs = ['third_party/lua', 'mrt', 'sdlx', 'objects', 'clunk']
+env.Append(CPPPATH=['#', '#/third_party/lua'])
 
 if (os.path.exists('private')):
 	dir = 'private'

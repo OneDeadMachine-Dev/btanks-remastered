@@ -1,13 +1,15 @@
 #!/bin/zsh
-# Сборка Battle Tanks (btanks) для macOS на Apple Silicon.
-# Зависимости: Homebrew (sdl, smpeg, libvorbis, expat, scons, pkgconf),
-# ~/btanks-deps (Lua 5.1.5 + SDL_image 1.2, собираются отдельно).
+# Сборка Battle Tanks Remastered для macOS (Apple Silicon).
+# Зависимости (всё из Homebrew):  brew install sdl3 sdl3_image libvorbis expat scons pkgconf
+# Lua 5.1 вшит в репозиторий (btanks-code/trunk/third_party/lua).
 set -e
 
-export PKG_CONFIG_PATH="$HOME/btanks-deps/lib/pkgconfig"
-export CFLAGS="-I$HOME/btanks-deps/include -I$HOME/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include"
-export CXXFLAGS="-I$HOME/btanks-deps/include -I$HOME/btanks-deps/include/SDL -I/opt/homebrew/include/SDL3 -I/opt/homebrew/include/SDL3_image -I/opt/homebrew/include -I/opt/homebrew/opt/expat/include -std=gnu++17"
-export LDFLAGS="-L$HOME/btanks-deps/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/expat/lib"
+BREW="$(brew --prefix)"
+INC="-I$BREW/include -I$BREW/include/SDL3 -I$BREW/include/SDL3_image -I$BREW/opt/expat/include"
+export PKG_CONFIG_PATH="$BREW/lib/pkgconfig:$BREW/share/pkgconfig"
+export CFLAGS="$INC"
+export CXXFLAGS="$INC -std=gnu++17"
+export LDFLAGS="-L$BREW/lib -L$BREW/opt/expat/lib"
 
 cd "$(dirname "$0")/btanks-code/trunk"
-exec scons -j8 mode=release "$@"
+exec scons -j"$(sysctl -n hw.ncpu)" mode=release "$@"

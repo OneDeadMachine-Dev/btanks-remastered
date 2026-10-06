@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# SCons / build output
+btanks-code/trunk/build/
+btanks-code/trunk/.sconf_temp/
+btanks-code/trunk/.sconsign.dblite
+btanks-code/trunk/config.log
+btanks-code/trunk/options.cache
+*.o
+*.os
+*.dylib
+*.a
+
+# built executables (the launcher script in the .app is tracked)
+btanks-code/trunk/btanks
+btanks-code/trunk/bted
+
+# legacy SVN metadata (history lives in git now)
+.svn/
+
+# local tooling / debug dumps
+.zcode/
+.zcodeignore
+bt_frame_*.bmp

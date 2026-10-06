@@ -1,4 +1,0 @@
-CCFLAGS = []
-CXXFLAGS = []
-LINKFLAGS = []
-LINK = '$SMARTLINK'
