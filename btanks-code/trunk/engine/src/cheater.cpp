@@ -59,9 +59,12 @@ Cheater::Cheater() : _buf_size(0) {
 #include "player_manager.h"
 #include "player_slot.h"
 
+//observes typed keys for cheat codes; it must never consume them (key_signal is
+//exclusive: the first handler that returns true hides the key from everybody else,
+//including the player's KeyPlayer)
 bool Cheater::onKey(const SDL_keysym sym, const bool pressed) {
 	if (!pressed)
-		return true;
+		return false;
 	
 	size_t n = sizeof(_buf)/sizeof(_buf[0]);
 	
@@ -84,7 +87,7 @@ bool Cheater::onKey(const SDL_keysym sym, const bool pressed) {
 		}
 	}
 	if (cheat.empty())
-		return true;
+		return false;
 
 	if (cheat == "skotobaza") {
 		/* SECRET ATATAT MODE !! */
@@ -108,5 +111,5 @@ bool Cheater::onKey(const SDL_keysym sym, const bool pressed) {
 		o->impassability = (o->impassability > 0)?0:1;		
 	} CATCH("activating cheat", {})
 	}
-	return true;
+	return false;
 }

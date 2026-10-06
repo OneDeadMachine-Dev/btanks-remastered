@@ -12,6 +12,9 @@
 #include "sdl_ex.h"
 #include <string.h>
 #include <SDL3/SDL_render.h>
+#ifdef __EMSCRIPTEN__
+#	include <emscripten.h>
+#endif
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -358,7 +361,13 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 		//(that left stale-content bars at the sides)
 		SDL_SyncWindow(_window);
 		int pw = 0, ph = 0;
+#ifdef __EMSCRIPTEN__
+		//the canvas is sized by CSS after creation: ask the page for its real size
+		pw = emscripten_run_script_int("window.innerWidth");
+		ph = emscripten_run_script_int("window.innerHeight");
+#else
 		SDL_GetWindowSizeInPixels(_window, &pw, &ph);
+#endif
 		if (pw <= 0 || ph <= 0) {
 			SDL_DisplayID display = SDL_GetDisplayForWindow(_window);
 			const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(display);
