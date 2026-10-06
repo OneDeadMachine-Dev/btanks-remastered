@@ -110,6 +110,7 @@ void RedefineKeys::load() {
 		_actions.push_back(Actions::value_type(I18n->get("menu", _labels[i]), sdlx::Rect()));
 		for(size_t j = 0; j < 3; ++j) {
 			Config->get("profile." + profile + ".controls." + variants[j] + "." + _labels[i], _keys[j][i], _keys[j][i]);
+			_keys[j][i] = sdl12_to_sdl3_keycode(_keys[j][i]); //configs saved by the SDL1.2 builds
 		}
 	}
 }

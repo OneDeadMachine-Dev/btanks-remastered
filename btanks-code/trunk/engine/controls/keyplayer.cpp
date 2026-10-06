@@ -61,7 +61,12 @@ KeyPlayer::KeyPlayer(const std::string &variant) {
 	Config->get(base + ".fire", fire, keys[i][4]);
 	Config->get(base + ".alt-fire", alt_fire, keys[i][5]);
 	Config->get(base + ".disembark", leave, keys[i][6]);
-	Config->get(base + ".hint-control", hint_control, keys[i][7]);
+	Config->get(base + ".hint-ctrl", hint_control, keys[i][7]); //same name the key settings menu saves
+
+	up = sdl12_to_sdl3_keycode(up); down = sdl12_to_sdl3_keycode(down);
+	left = sdl12_to_sdl3_keycode(left); right = sdl12_to_sdl3_keycode(right);
+	fire = sdl12_to_sdl3_keycode(fire); alt_fire = sdl12_to_sdl3_keycode(alt_fire);
+	leave = sdl12_to_sdl3_keycode(leave); hint_control = sdl12_to_sdl3_keycode(hint_control);
 
 	_up = (SDL_Keycode)up;
 	_down = (SDL_Keycode)down;
