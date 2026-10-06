@@ -125,7 +125,8 @@ void IWindow::init(const int argc, char *argv[]) {
 	_init_joystick = true;
 
 	_fullscreen = false;
-	_vsync = false;
+	_vsync = true;
+	_vsync_active = false;
 	_fsaa = 0;
 
 	_opengl = true;
@@ -136,6 +137,7 @@ void IWindow::init(const int argc, char *argv[]) {
 	Config->get("engine.window.width", _w, 800);
 	Config->get("engine.window.height", _h, 600);
 	Config->get("engine.window.fullscreen", _fullscreen, false);
+	Config->get("engine.window.vsync", _vsync, true);
 
 	for(int i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--fs") == 0) _fullscreen = true;
@@ -210,9 +212,6 @@ void IWindow::createMainWindow() {
 		}
 	} CATCH("screen modes probe", {});
 
-	if (_vsync)
-		SDL_SetRenderVSync(sdlx::Surface::get_renderer(), 1);
-
 	//in fullscreen keep the game's virtual resolution at the classic 800x600
 	//(big UI, crisp GPU scaling) unless a resolution switch was given
 	if (_fullscreen && !_explicit_size) {
@@ -233,6 +232,14 @@ void IWindow::createMainWindow() {
 		SDL_SetWindowFullscreenMode(sdlx::Surface::get_window(), NULL);
 	}
 
+	//the renderer exists only after set_video_mode()
+	if (_vsync && sdlx::Surface::get_renderer() != NULL) {
+		SDL_SetRenderVSync(sdlx::Surface::get_renderer(), 1);
+		int v = 0;
+		_vsync_active = SDL_GetRenderVSync(sdlx::Surface::get_renderer(), &v) && v > 0;
+		LOG_DEBUG(("vsync: %s", _vsync_active? "on": "unavailable"));
+	}
+
 	sdlx::Surface::set_window_title("Battle tanks - " + getVersion());
 	LOG_DEBUG(("created main surface. (%dx%dx%d, renderer: %s)", _w, _h, _window.getBPP(), SDL_GetRendererName(sdlx::Surface::get_renderer())));
 }
@@ -240,10 +247,20 @@ void IWindow::createMainWindow() {
 void IWindow::run() {
 
 	GET_CONFIG_VALUE("engine.fps-limit", int, fps_limit, 100);
+	GET_CONFIG_VALUE("engine.simulation-rate", int, sim_rate, 120);
+	if (sim_rate < 30) sim_rate = 30;
+	if (sim_rate > 480) sim_rate = 480;
 
 	_fr = fps_limit;
 	int max_delay = 1000000 / fps_limit;
-	LOG_DEBUG(("fps_limit set to %d, maximum frame delay: %d", fps_limit, max_delay));
+	const double sim_step = 1.0 / sim_rate;
+	LOG_DEBUG(("fps_limit set to %d, maximum frame delay: %d, simulation: %d steps/s%s",
+		fps_limit, max_delay, sim_rate, _vsync_active? ", vsync": ""));
+
+	//fixed timestep with an accumulator: the simulation result no longer depends
+	//on the frame rate (vsync, 60/120Hz displays, slow frames)
+	Uint64 last_ns = SDL_GetTicksNS();
+	double accumulator = 0;
 
 	SDL_Event events[32];
 	while (_running) {
@@ -329,9 +346,22 @@ void IWindow::run() {
 			}
 		}
 
-		const float dt = 1.0/_fr;
+		const Uint64 now_ns = SDL_GetTicksNS();
+		double elapsed = (now_ns - last_ns) / 1e9;
+		last_ns = now_ns;
+		if (elapsed > 0.1) elapsed = 0.1; //window drag, breakpoint, loading hitch: do not spiral
+		accumulator += elapsed;
 
-		tick_signal.emit(dt);
+		int steps = 0;
+		while (accumulator >= sim_step && steps < 8) {
+			sim_signal.emit((float)sim_step);
+			accumulator -= sim_step;
+			++steps;
+		}
+		if (accumulator >= sim_step)
+			accumulator = 0; //could not catch up: drop the debt
+
+		tick_signal.emit((float)(elapsed > 0.0005? elapsed: 0.0005));
 
 
 		IWindow::flip();
@@ -360,7 +390,7 @@ void IWindow::run() {
 		if (t_delta < 0)
 			t_delta = 0;
 #endif
-		if (t_delta < max_delay) {
+		if (!_vsync_active && t_delta < max_delay) {
 			sdlx::Timer::microsleep("fps limit", max_delay - t_delta);
 		}
 

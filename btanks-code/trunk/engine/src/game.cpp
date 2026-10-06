@@ -30,6 +30,7 @@
 #include <time.h>
 #include "object.h"
 #include "game.h"
+#include <algorithm>
 #include "version.h"
 #include "world.h"
 #include "finder.h"
@@ -128,25 +129,36 @@ void IGame::run() {
 	} else {
 		server_running = true;
 		LOG_DEBUG(("server is up and running!"));
-		sdlx::Timer _timer;	
-		
-		int limit = 1000000 / 100;
-		float dt = limit / 1000000.0f;
+		sdlx::Timer _timer;
+		GET_CONFIG_VALUE("engine.simulation-rate", int, sim_rate, 120);
+		if (sim_rate < 30) sim_rate = 30;
+		const int limit = 1000000 / sim_rate;
+		const float dt = limit / 1000000.0f;
+		int debt = 0; //microseconds we are behind schedule
 		while(server_running) {
 			_timer.reset();
 			if (!Map->loaded()) {
 				start_random_map();
 			}
-			if (PlayerManager->is_server_active())
-				tick(dt);
-			else 
-				PlayerManager->tick(dt);
-			
+			//one step per loop plus catch-up steps for the time we lost (bounded)
+			int ticks = 1 + std::min(7, debt / limit);
+			debt -= (ticks - 1) * limit;
+			for(int i = 0; i < ticks; ++i) {
+				if (PlayerManager->is_server_active())
+					tick(dt);
+				else
+					PlayerManager->tick(dt);
+			}
+
 			int t = _timer.microdelta();
 			if (t < limit) {
 				_timer.microsleep("server fps limit", limit - t);
 			}
-			dt = _timer.microdelta() / 1000000.0f;
+			debt += _timer.microdelta() - limit;
+			if (debt < 0)
+				debt = 0;
+			if (debt > 8 * limit)
+				debt = 8 * limit;
 		}
 	}
 }
@@ -488,6 +500,7 @@ void IGame::init(const int argc, char *argv[]) {
 	if (!RTConfig->server_mode) {
 		on_map_slot.assign(this, &IGame::onMap, Map->load_map_signal);
 
+		on_sim_slot.assign(this, &IGame::onSimTick, Window->sim_signal);
 		on_logo_tick_slot.assign(this, &IGame::logo_tick, Window->tick_signal);
 		on_tick_slot.assign(this, &IGame::onTick, Window->tick_signal);
 	}
@@ -840,6 +853,33 @@ bool IGame::tick(const float dt) {
 	return true;
 }
 
+bool IGame::onSimTick(const float dt) {
+	//the simulation stands still while quitting, loading resources, showing
+	//logos/cutscenes or paused (same conditions the frame tick used to apply)
+	if (_quit || _need_postinit || _cutscene != NULL || !_logos.empty())
+		return false;
+	if (!Window->running() || _paused)
+		return false;
+
+	GameMonitor->tick(dt);
+	if (GameMonitor->game_over()) {
+		_show_stats = true;
+	}
+
+	if (Map->loaded()) {
+		if (!PlayerManager->is_client())
+			GameMonitor->checkItems(dt);
+
+		Map->tick(dt);
+		World->tick(dt);
+		PlayerManager->update_players(dt);
+		World->purge(dt);
+	}
+
+	PlayerManager->tick(dt); //avoid any dead objects in serialization
+	return false;
+}
+
 bool IGame::onTick(const float dt) {
 	if (_quit) {
 		Window->stop();
@@ -851,27 +891,6 @@ bool IGame::onTick(const float dt) {
 
 	sdlx::Surface &window = Window->get_surface();
 	int vx = 0, vy = 0;
-
-	if (Window->running() && !_paused) {
-		GameMonitor->tick(dt);
-		if (GameMonitor->game_over()) {
-			_show_stats = true;
-		}
-	}
-
-	if (Map->loaded() && Window->running() && !_paused) {
-		if (!PlayerManager->is_client())
-			GameMonitor->checkItems(dt);
-		
-		Map->tick(dt);
-		World->tick(dt);
-		PlayerManager->update_players(dt);
-		World->purge(dt);
-	}
-
-	if (Window->running() && !_paused) {
-		PlayerManager->tick(dt); //avoid any dead objects in serialization
-	}
 
 	Mixer->tick(dt);
 
@@ -917,8 +936,8 @@ bool IGame::onTick(const float dt) {
 
 		if (_net_talk != NULL) {
 			_net_talk->tick(dt);
+			_net_talk->render(window, 8, 32);
 		}
-		_net_talk->render(window, 8, 32);
 	}
 
 	if (_main_menu) {

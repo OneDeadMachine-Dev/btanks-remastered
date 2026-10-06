@@ -44,6 +44,9 @@ public:
 
 	//signals
 	sl08::signal1<void, const SDL_Event& > event_signal;
+	//fixed-step simulation: emitted 0..N times per frame with a constant dt
+	sl08::signal1<bool, float, sl08::exclusive_validator<bool> > sim_signal;
+	//once per rendered frame with the real elapsed time
 	sl08::signal1<bool, float, sl08::exclusive_validator<bool> > tick_signal;
 	sl08::signal2<bool, const SDL_keysym, const bool, sl08::exclusive_validator<bool> > key_signal;
 	sl08::signal3<void, const int, const int, const bool> joy_button_signal;
@@ -74,7 +77,7 @@ private:
 	sdlx::Surface _window;
 	int _fsaa;
 	bool _init_joystick;
-	bool _fullscreen, _vsync, _running;
+	bool _fullscreen, _vsync, _vsync_active, _running;
 	bool _explicit_size;
 #ifdef _WINDOWS
 	bool _dx;

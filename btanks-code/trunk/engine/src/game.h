@@ -108,7 +108,9 @@ private:
 	void notifyLoadingBar(const int progress, const char *what);
 
 	sl08::slot1<bool, float, IGame> on_tick_slot;
-	bool onTick(float dt);
+	sl08::slot1<bool, float, IGame> on_sim_slot;
+	bool onSimTick(float dt); //fixed-step simulation
+	bool onTick(float dt); //per-frame: menu, sound, rendering
 	sl08::slot1<bool, float, IGame> on_logo_tick_slot;
 	bool logo_tick(float dt);
 	bool tick(float dt);
