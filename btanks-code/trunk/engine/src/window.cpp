@@ -333,6 +333,7 @@ void IWindow::run() {
 
 		tick_signal.emit(dt);
 
+
 		IWindow::flip();
 
 		//temporary debug: dump raw framebuffer contents of given frames

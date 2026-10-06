@@ -29,6 +29,7 @@ static SDL_Renderer *_renderer = NULL;
 static SDL_Surface *_screen_surface = NULL; //1x1 format holder, marks the screen
 static int _logical_w = 0, _logical_h = 0;
 static std::string _window_title = "Battle Tanks";
+static std::string _screenshot_path; //pending screenshot of the screen, taken in flip() before present
 
 //GPU texture cache keyed by the source SDL_Surface pointer.
 //small surfaces (map tiles, bullets, particles) are packed into shared atlas
@@ -341,12 +342,20 @@ void Surface::set_video_mode(int w, int h, int bpp, int flags) {
 	_logical_w = w;
 	_logical_h = h;
 	if ((flags & Fullscreen) == Fullscreen) {
-		//the window size is racy during the fullscreen mode switch: take the
-		//aspect from the desktop display mode instead
-		SDL_DisplayID display = SDL_GetDisplayForWindow(_window);
-		const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(display);
-		if (dm != NULL && dm->w > 0 && dm->h > 0) {
-			int lw = (int)(h * ((float)dm->w / dm->h)) & ~1;
+		//the fullscreen switch is asynchronous: wait until it settles and take the
+		//aspect from the real window. on notched MacBooks the window is shorter
+		//than the display, so the desktop display mode gives the wrong aspect
+		//(that left stale-content bars at the sides)
+		SDL_SyncWindow(_window);
+		int pw = 0, ph = 0;
+		SDL_GetWindowSizeInPixels(_window, &pw, &ph);
+		if (pw <= 0 || ph <= 0) {
+			SDL_DisplayID display = SDL_GetDisplayForWindow(_window);
+			const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(display);
+			if (dm != NULL) { pw = dm->w; ph = dm->h; }
+		}
+		if (pw > 0 && ph > 0) {
+			int lw = (int)(h * ((float)pw / ph)) & ~1;
 			if (lw < 640) lw = 640;
 			if (lw > 2048) lw = 2048;
 			_logical_w = lw;
@@ -450,14 +459,9 @@ void Surface::load_bmp(const std::string &fname) {
 
 void Surface::save_bmp(const std::string &fname)  const {
 	if (surface == _screen_surface && _renderer != NULL) {
-		//GPU-composed screen: read the presented frame back
-		SDL_Surface *shot = SDL_RenderReadPixels(_renderer, NULL);
-		if (shot == NULL)
-			throw_sdl(("SDL_RenderReadPixels"));
-		bool r = SDL_SaveBMP_IO(shot, SDL_IOFromFile(fname.c_str(), "wb"), true);
-		SDL_DestroySurface(shot);
-		if (!r)
-			throw_sdl(("SDL_SaveBMP_IO"));
+		//GPU-composed screen: the frame exists only inside the renderer, so the
+		//readback happens in flip() right before present (next frame)
+		_screenshot_path = fname;
 		return;
 	}
 	if (!SDL_SaveBMP_IO(surface, SDL_IOFromFile(fname.c_str(), "wb"), true))
@@ -553,7 +557,20 @@ void Surface::update(const int x, const int y, const int w, const int h) {
 
 void Surface::flip() {
 	if (surface == _screen_surface && _renderer != NULL) {
+		if (!_screenshot_path.empty()) {
+			SDL_Surface *shot = SDL_RenderReadPixels(_renderer, NULL);
+			if (shot != NULL) {
+				SDL_SaveBMP_IO(shot, SDL_IOFromFile(_screenshot_path.c_str(), "wb"), true);
+				SDL_DestroySurface(shot);
+			}
+			_screenshot_path.clear();
+		}
 		SDL_RenderPresent(_renderer);
+		//SDL3 logical presentation never clears the letterbox bars; without this
+		//they show whatever was in the swapchain buffers (old frames)
+		SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
+		SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+		SDL_RenderClear(_renderer);
 	}
 }
 
