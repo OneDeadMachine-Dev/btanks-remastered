@@ -31,6 +31,8 @@ From the repository root on the supported Homebrew/Apple Silicon setup:
 
 The runner creates and removes a temporary directory. It exercises the real collision, configuration, serialization and input components; it does not drive a complete match.
 
+The publication compatibility checks also cover XML/server-discovery map assignment and compare serialized maps with the existing ordered count/key/value format.
+
 For a separately prepared sanitizer build:
 
 ```sh

@@ -56,7 +56,7 @@ private:
 	std::string get_name_by_addr(const mrt::Socket::addr &addr);
 	mrt::Socket::addr get_addr_by_name(const std::string &name);
 	
-	typedef std::map<const std::string, mrt::Socket::addr> dns_cache_t;
+	typedef std::map<std::string, mrt::Socket::addr> dns_cache_t;
 	dns_cache_t dns_cache;
 };
 

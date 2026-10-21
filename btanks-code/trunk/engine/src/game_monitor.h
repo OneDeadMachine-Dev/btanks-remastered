@@ -190,9 +190,9 @@ private:
 	bool _objects_limit_reached;
 	
 	//waypoints stuff
-	typedef std::map<const std::string, v2<int> > WaypointMap;
-	typedef std::map<const std::string, WaypointMap> WaypointClassMap;
-	typedef std::multimap<const std::string, std::string> WaypointEdgeMap;
+	typedef std::map<std::string, v2<int> > WaypointMap;
+	typedef std::map<std::string, WaypointMap> WaypointClassMap;
+	typedef std::multimap<std::string, std::string> WaypointEdgeMap;
 	
 	WaypointMap 	 _all_waypoints;
 	WaypointClassMap _waypoints;
@@ -219,7 +219,7 @@ private:
 		bool repeat;
 		Timer(const float period, const bool repeat): t(0), period(period), repeat(repeat) {}
 	};
-	typedef std::map<const std::string, Timer> Timers;
+	typedef std::map<std::string, Timer> Timers;
 	Timers timers;
 	
 	int team_base[4];

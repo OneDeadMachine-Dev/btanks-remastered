@@ -32,7 +32,7 @@ void Profiler::dump() {
 		return;
 	
 	LOG_NOTICE(("[object name]                    mcS      peak     count    lifetime avg.load"));
-	typedef std::multimap<const double, std::pair<std::string, data> , std::greater<double> > Results;
+	typedef std::multimap<double, std::pair<std::string, data> , std::greater<double> > Results;
 	Results results;
 	
 	for(Samples::const_iterator i = samples.begin(); i != samples.end(); ++i) {

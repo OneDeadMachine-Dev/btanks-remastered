@@ -2,6 +2,7 @@
 #include "mrt/file.h"
 #include "mrt/serializator.h"
 #include "mrt/chunk.h"
+#include "net/scanner.h"
 #include "sdlx/surface.h"
 #include "sdlx/cursor.h"
 #include "sdlx/joystick.h"
@@ -17,6 +18,7 @@
 #include <stdexcept>
 #include <filesystem>
 #include <csignal>
+#include <cstring>
 #include <sys/resource.h>
 
 static void require(bool value, const char *message) {
@@ -79,6 +81,38 @@ int main(int argc, char **argv) {
 			for (int value : integers) { input.get(result); require(result == value, "integer roundtrip failed"); }
 		}
 		std::puts("PASS: integer roundtrips at every byte alignment");
+
+		{
+			mrt::XMLParser::Attrs attrs, copied;
+			attrs["name"] = "map & server";
+			copied["stale"] = "discard";
+			copied = attrs;
+			attrs["name"] = "changed";
+			require(copied.size() == 1 && copied["name"] == "map & server", "XML attribute assignment was not independent");
+			Scanner::HostMap hosts, snapshot;
+			mrt::Socket::addr address;
+			hosts[address].name = "server";
+			snapshot = hosts;
+			hosts.clear();
+			require(snapshot.size() == 1 && snapshot.begin()->second.name == "server", "server discovery snapshot was not copied");
+
+			const std::map<std::string, int> source = {{"zeta", -257}, {"alpha", 65536}};
+			mrt::Serializator write, expected;
+			mrt::Chunk bytes, expected_bytes;
+			write.add(source); write.finalize(bytes);
+			expected.add(2u);
+			expected.add(std::string("alpha")); expected.add(65536);
+			expected.add(std::string("zeta")); expected.add(-257);
+			expected.finalize(expected_bytes);
+			require(bytes.get_size() == expected_bytes.get_size() &&
+				std::memcmp(bytes.get_ptr(), expected_bytes.get_ptr(), bytes.get_size()) == 0,
+				"map serialization changed the ordered count/key/value wire format");
+			mrt::Serializator input(&bytes);
+			std::map<std::string, int> restored = {{"stale", 1}};
+			input.get(restored);
+			require(restored == source, "map roundtrip failed to replace existing entries");
+		}
+		std::puts("PASS: XML/server map assignment and unchanged ordered map serialization");
 
 		NetStats clocks;
 		require(clocks.getAge(60000, 2000) == 0, "unsynchronized clocks used for rewind");

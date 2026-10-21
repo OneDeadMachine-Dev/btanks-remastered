@@ -177,9 +177,9 @@ private:
 	Context *context;
 	v3<float> position, velocity, direction;
 
-	typedef std::multimap<const std::string, Source *> NamedSources;
+	typedef std::multimap<std::string, Source *> NamedSources;
 	NamedSources named_sources;
-	typedef std::multimap<const int, Source *> IndexedSources;
+	typedef std::multimap<int, Source *> IndexedSources;
 	IndexedSources indexed_sources;
 	
 	bool dead;

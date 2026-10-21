@@ -193,10 +193,10 @@ OpenMapDialog::OpenMapDialog() {
 	} CATCH("ctor", {})
 	
 	for(size_t i = 0; i < path.size(); ++i) {
-		std::multimap<const std::string, std::string>::const_iterator b = _maps.lower_bound(path[i]);
-		std::multimap<const std::string, std::string>::const_iterator e = _maps.upper_bound(path[i]);
+		std::multimap<std::string, std::string>::const_iterator b = _maps.lower_bound(path[i]);
+		std::multimap<std::string, std::string>::const_iterator e = _maps.upper_bound(path[i]);
 		std::vector<std::string> submaps;
-		for(std::multimap<const std::string, std::string>::const_iterator j = b; j != e; ++j) {
+		for(std::multimap<std::string, std::string>::const_iterator j = b; j != e; ++j) {
 			submaps.push_back(j->second);
 		}
 		Chooser *c;
@@ -205,7 +205,7 @@ OpenMapDialog::OpenMapDialog() {
 	}
 
 
-	for(std::map<const std::string, Chooser *>::const_iterator i = _map_chooser.begin(); i != _map_chooser.end(); ++i) {
+	for(std::map<std::string, Chooser *>::const_iterator i = _map_chooser.begin(); i != _map_chooser.end(); ++i) {
 		int cw, ch;
 		i->second->get_size(cw, ch);
 		add(mx + (w - cw) / 2, yp, i->second);

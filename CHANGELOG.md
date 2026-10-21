@@ -23,7 +23,7 @@ This file tracks the modern remaster. Historical upstream changes remain in [the
 - Float positive exponents and aligned integer serialization.
 - Pending world commands and detached objects discarded when changing maps.
 - SCons debug arguments, invalid FPS-limit fallback and consistent native/Web version strings.
-- Server-discovery map assignment compatibility with the libc++ shipped in Xcode 16.4.
+- Map assignment compatibility with the libc++ shipped in Xcode 16.4; redundant `const` key template arguments removed consistently, with the ordered serialization format preserved.
 
 ### Modern port, October 2026
 

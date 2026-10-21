@@ -57,7 +57,7 @@ private:
 	std::string _base, _fname;
 	
 	typedef std::set<std::string> Classes; 
-	typedef std::multimap<const std::string, std::string> Animations, Variants;
+	typedef std::multimap<std::string, std::string> Animations, Variants;
 	typedef std::vector<Animations::const_iterator> UserData;
 	
 	Classes _classes; 

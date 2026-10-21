@@ -54,8 +54,8 @@ private:
 	Prompt  *p_name;
 	NumberControl *n_width, *n_height;
 	std::string base, map;
-	std::multimap<const std::string, std::string> _maps;
-	std::map<const std::string, Chooser *> _map_chooser;
+	std::multimap<std::string, std::string> _maps;
+	std::map<std::string, Chooser *> _map_chooser;
 };
 
 #endif
