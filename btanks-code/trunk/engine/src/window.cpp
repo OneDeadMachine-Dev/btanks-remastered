@@ -338,6 +338,10 @@ void IWindow::debug_dump_frame() {
 
 void IWindow::start_loop() {
 	GET_CONFIG_VALUE("engine.fps-limit", int, fps_limit, 100);
+	if (fps_limit <= 0) {
+		LOG_WARN(("invalid fps limit %d; using 100", fps_limit));
+		fps_limit = 100;
+	}
 	GET_CONFIG_VALUE("engine.simulation-rate", int, sim_rate, 120);
 	if (sim_rate < 30) sim_rate = 30;
 	if (sim_rate > 480) sim_rate = 480;

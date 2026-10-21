@@ -37,7 +37,7 @@
 #include "sdlx/cursor.h"
 #include "tmx/map.h"
 
-MouseControl::MouseControl(): _shoot(false), _shoot_alt(false), bleave(false), alt_fire(0.3f, false) {
+MouseControl::MouseControl(): target_screen_set(false), _target_dir(0), _shoot(false), _shoot_alt(false), bleave(false), alt_fire(0.3f, false) {
 	on_mouse_slot.assign(this, &MouseControl::onMouse, Window->mouse_signal);
 } 
 

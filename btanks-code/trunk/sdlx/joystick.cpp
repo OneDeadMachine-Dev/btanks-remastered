@@ -71,6 +71,10 @@ const bool Joystick::opened() const {
 	return _joy != NULL;
 }
 
+SDL_JoystickID Joystick::get_id() const {
+	return _joy != NULL ? SDL_GetJoystickID(_joy) : 0;
+}
+
 Sint16 Joystick::get_axis(const int idx) const {
 	if (_joy == NULL)
 		throw_ex(("get_axis(%d) on uninitialized joystick", idx));

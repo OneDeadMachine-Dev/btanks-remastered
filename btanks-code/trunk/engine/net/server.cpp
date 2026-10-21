@@ -169,6 +169,8 @@ void Server::send(const int id, const Message &m) {
 		//LOG_DEBUG(("sending message '%s' to %d", m.getType(), id));
 		mrt::Chunk data;
 		m.serialize2(data);
+		if (m.type == Message::GameJoined)
+			_monitor->bind_channel(id, m.channel);
 		_monitor->send(id, data, m.realtime());
 	} CATCH("send", {
 		disconnect(id);

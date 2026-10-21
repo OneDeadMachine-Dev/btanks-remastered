@@ -49,6 +49,7 @@ public:
 	Monitor(const int cl);
 	void setCompressionLevel(const int level = 3);
 	void add(const int id, Connection *);
+	void bind_channel(const int id, const int channel);
 	const bool active() const;
 	
 	void connect(const mrt::Socket::addr &host);

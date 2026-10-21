@@ -40,7 +40,7 @@
 #include "connection.h"
 #include "config.h"
 
-Client::Client(): _monitor(NULL), sent_req(false) {
+Client::Client(): _monitor(NULL), sent_req(false), _channel(-1) {
 }
 
 Client::~Client() {
@@ -61,13 +61,19 @@ void Client::init(const mrt::Socket::addr &host) {
 	_monitor->connect(host);
 	_monitor->start();
 	sent_req = false;
+	_channel = -1;
 }
 
 void Client::send(const Message &m) {
 	LOG_DEBUG(("sending '%s' via channel %d", m.getType(), m.channel));
 
 	mrt::Chunk data;
-	m.serialize2(data);
+	Message outgoing(m);
+	// Ping/Pong also identify a slot owned by this TCP connection, so the
+	// server can learn our UDP endpoint even while the player is idle.
+	if (outgoing.realtime() && outgoing.channel < 0)
+		outgoing.channel = _channel;
+	outgoing.serialize2(data);
 	
 	_monitor->send(0, data, m.realtime());	
 }
@@ -90,6 +96,8 @@ void Client::tick(const float dt) {
 		assert(id == 0);
 		Message m;
 		m.deserialize2(data);
+		if (m.type == Message::GameJoined)
+			_channel = m.channel;
 
 		switch(m.type) {
 		case Message::UpdateWorld:

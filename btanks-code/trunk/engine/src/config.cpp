@@ -62,10 +62,7 @@ void IConfig::save() const {
 			XMLParser::escape(i->second->toString()).c_str());
 	}
 	data += "</config>\n";
-	mrt::File f;
-	f.open(_file, "wt");
-	f.write_all(data);
-	f.close();
+	mrt::File::write_atomic(_file, data);
 }
 
 

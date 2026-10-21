@@ -46,7 +46,7 @@ public:
 	inline const std::string dump() const { return _data.dump();}
 private: 
 	bool _empty, _full;
-	unsigned int _w, _h;
+	unsigned int _w, _h, _width;
 	mrt::Chunk _data;
 };
 }

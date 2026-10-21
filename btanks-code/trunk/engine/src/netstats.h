@@ -24,6 +24,13 @@ public:
 
 	inline float getPing() const { return ping;}
 	inline public_delta_t getDelta() const { return (public_delta_t)delta; } 
+	// Before the first clock sample, apply input at receipt time. Timestamp
+	// subtraction is signed so a slightly future packet does not wrap to days.
+	inline float getAge(const unsigned now, const unsigned timestamp) const {
+		if (deltas_n == 0) return 0;
+		const public_delta_t age = (public_delta_t)(now + (unsigned)getDelta() - timestamp);
+		return age / 1000.0f;
+	}
 	void clear();
 
 private: 

@@ -17,7 +17,7 @@ picLibBuilder = Builder(
 env['BUILDERS']['StaticLibrary'] = picLibBuilder
 env['BUILDERS']['Library'] = picLibBuilder
 
-opts = Variables(['options.cache'])
+opts = Variables(['options.cache'], ARGUMENTS)
 #opts.Add('CC', 'C compiler')
 #opts.Add('CXX', 'C++ compiler')
 opts.Add('CCFLAGS', 'General options that are passed to the C compiler')
@@ -238,12 +238,12 @@ if sys.platform == 'darwin':
 	if len(env['prefix']) == 0:
 		lib_dir = '@loader_path'
 
+version = '0.9.%s' %version
 Export('version')
 Export('revision')
 Export('lib_dir')
 Export('plugins_dir')
 
-version = '0.9.%s' %version
 print("version: %s" %version)
 
 bt_sublibs = ['third_party/lua', 'mrt', 'sdlx', 'objects', 'clunk']

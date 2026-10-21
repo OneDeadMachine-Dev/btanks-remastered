@@ -18,6 +18,13 @@
 #include "file.h"
 #include "ioexception.h"
 #include "chunk.h"
+#include <vector>
+#include <errno.h>
+#include <stdlib.h>
+#ifdef _WINDOWS
+#include <windows.h>
+#include <io.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,6 +36,64 @@
 using namespace mrt;
 
 File::File():_f(NULL) {}
+
+void File::write_atomic(const std::string &fname, const std::string &data) {
+	std::string temporary;
+	FILE *out = NULL;
+#ifdef _WINDOWS
+	char path[MAX_PATH];
+	std::string dir = FSNode::get_dir(fname);
+	if (dir.empty()) dir = ".";
+	if (!GetTempFileNameA(dir.c_str(), "btk", 0, path))
+		throw_ex(("creating temporary config failed: %lu", GetLastError()));
+	temporary = path;
+	out = fopen(temporary.c_str(), "wb");
+#else
+	std::string pattern = fname + ".tmp.XXXXXX";
+	std::vector<char> path(pattern.begin(), pattern.end());
+	path.push_back('\0');
+	int fd = mkstemp(&path[0]);
+	if (fd < 0)
+		throw_io(("creating temporary file for %s", fname.c_str()));
+	temporary = &path[0];
+	out = fdopen(fd, "wb");
+	if (out == NULL) {
+		const int error = errno;
+		::close(fd);
+		remove(temporary.c_str());
+		errno = error;
+		throw_io(("fdopen(%s)", temporary.c_str()));
+	}
+#endif
+	try {
+		if (out == NULL)
+			throw_io(("opening temporary file for %s", fname.c_str()));
+		if (fwrite(data.data(), 1, data.size(), out) != data.size() || fflush(out) != 0)
+			throw_io(("writing temporary file for %s", fname.c_str()));
+#ifdef _WINDOWS
+		if (_commit(_fileno(out)) != 0)
+			throw_io(("flushing temporary file for %s", fname.c_str()));
+#elif !defined(__EMSCRIPTEN__)
+		if (fsync(fileno(out)) != 0)
+			throw_io(("flushing temporary file for %s", fname.c_str()));
+#endif
+		const int result = fclose(out);
+		out = NULL;
+		if (result != 0)
+			throw_io(("closing temporary file for %s", fname.c_str()));
+#ifdef _WINDOWS
+		if (!MoveFileExA(temporary.c_str(), fname.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+			throw_ex(("replacing config failed: %lu", GetLastError()));
+#else
+		if (rename(temporary.c_str(), fname.c_str()) != 0)
+			throw_io(("replacing %s", fname.c_str()));
+#endif
+	} catch (...) {
+		if (out != NULL) fclose(out);
+		remove(temporary.c_str());
+		throw;
+	}
+}
 
 void File::open(const std::string &fname, const std::string &mode) {
 	_f = fopen(fname.c_str(), mode.c_str());

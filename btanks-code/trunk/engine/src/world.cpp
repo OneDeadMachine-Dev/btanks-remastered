@@ -90,6 +90,17 @@ void IWorld::initMap() {
 
 void IWorld::clear() {
 	LOG_DEBUG(("cleaning up world..."));
+	// A vehicle can queue a replacement during the last tick of a map.
+	// These detached objects belong to that map, just like live objects.
+	std::set<Object *> pending;
+	for (Commands::const_iterator i = _commands.begin(); i != _commands.end(); ++i)
+		if (i->type == Command::Push && i->object != NULL)
+			pending.insert(i->object);
+	for (ObjectMap::const_iterator i = _objects.begin(); i != _objects.end(); ++i)
+		pending.erase(i->second);
+	_commands.clear();
+	for (std::set<Object *>::iterator i = pending.begin(); i != pending.end(); ++i)
+		delete *i;
 	std::for_each(_objects.begin(), _objects.end(), delete_ptr2<ObjectMap::value_type>());
 	_objects.clear();
 	_grid.clear();

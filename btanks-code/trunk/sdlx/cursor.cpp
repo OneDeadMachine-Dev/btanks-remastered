@@ -18,12 +18,13 @@
 
 #include "sdlx/cursor.h"
 #include "sdlx.h"
+#include "surface.h"
 
 const bool sdlx::Cursor::enabled() {
     return SDL_CursorVisible();
 }
 void sdlx::Cursor::Disable() {
-    SDL_ShowCursor();
+    SDL_HideCursor();
 }
 void sdlx::Cursor::Enable() {
     SDL_ShowCursor();
@@ -37,6 +38,9 @@ void sdlx::Cursor::set_position(const int x, const int y) {
 void sdlx::Cursor::get_position(int &x, int &y) {
 	float fx = 0.0f, fy = 0.0f;
 	SDL_GetMouseState(&fx, &fy);
+	SDL_Renderer *renderer = sdlx::Surface::get_renderer();
+	if (renderer != NULL)
+		SDL_RenderCoordinatesFromWindow(renderer, fx, fy, &fx, &fy);
 	x = (int)fx;
 	y = (int)fy;
 }

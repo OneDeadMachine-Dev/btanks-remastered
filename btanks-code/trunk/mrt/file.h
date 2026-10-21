@@ -46,6 +46,7 @@ public:
 	virtual const off_t get_size() const;
 	virtual const size_t read(void *buf, const size_t size) const;
 	virtual void close();
+	static void write_atomic(const std::string &fname, const std::string &data);
 	
 	virtual bool eof() const;
 

@@ -105,10 +105,12 @@ void Serializator::add(const int n) {
 		buf[0] = x;
 		len = 1;
 	} else if (x <= 65535) {
-		* (uint16_t *)buf = htons(x);
+		const uint16_t encoded = htons(x);
+		memcpy(buf, &encoded, sizeof(encoded));
 		len = 2;
 	} else if (x <= 2147483647) {
-		* (uint32_t *)buf = htonl(x); //defined as uint32 even on 64bit arch
+		const uint32_t encoded = htonl(x);
+		memcpy(buf, &encoded, sizeof(encoded));
 		len = 4;
 	} else throw_ex(("implement me (64bit values serialization)"));
 
@@ -192,6 +194,13 @@ void Serializator::add(const float f) {
 	char num[8];
 	int len = snprintf(buf, sizeof(buf), "%g", f);
 	assert(len >= 0 && len < (int)sizeof(buf));
+	// A positive exponent needs no sign. The existing wire alphabet has
+	// a minus sign, but no plus sign; omitting '+' keeps old readers valid.
+	char *plus = strchr(buf, '+');
+	if (plus != NULL) {
+		memmove(plus, plus + 1, strlen(plus));
+		--len;
+	}
 	memset(num, 0, sizeof(num));
 	for(int i = 0; i < len; ++i) {
 		char c = buf[i];
@@ -233,17 +242,24 @@ void Serializator::get(int &n)  const {
 	} else if(len == 1) {
 		n = *(ptr + _pos++);
 	} else if (len == 2) {
-		n = ntohs(*((uint16_t *)(ptr + _pos)));
+		uint16_t encoded;
+		memcpy(&encoded, ptr + _pos, sizeof(encoded));
+		n = ntohs(encoded);
 		_pos += 2;
 	} else if (len == 4) {
-		n = ntohl(*((uint32_t *)(ptr + _pos)));
+		uint32_t encoded;
+		memcpy(&encoded, ptr + _pos, sizeof(encoded));
+		n = ntohl(encoded);
 		_pos += 4;
 #if defined _WIN64 || __WORDSIZE == 64
 //temp hack for 64 bit arch
 	} else if (len == 8) {
-		long nh = ntohl(*((uint32_t *)(ptr + _pos)));
+		uint32_t encoded;
+		memcpy(&encoded, ptr + _pos, sizeof(encoded));
+		long nh = ntohl(encoded);
 		_pos += 4;
-		long nl = ntohl(*((uint32_t *)(ptr + _pos)));
+		memcpy(&encoded, ptr + _pos, sizeof(encoded));
+		long nl = ntohl(encoded);
 		_pos += 4;
 		n = (nh << 32) | nl;
 #endif

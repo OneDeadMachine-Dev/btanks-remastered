@@ -50,6 +50,7 @@ protected:
 	Monitor *_monitor;
 	mrt::UDPSocket _udp_sock;
 	bool sent_req;
+	int _channel;
 private: 
 	Client(const Client &);
 	const Client &operator=(const Client&);

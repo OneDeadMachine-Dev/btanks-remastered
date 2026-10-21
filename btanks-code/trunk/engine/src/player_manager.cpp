@@ -276,7 +276,7 @@ TRY {
 	case Message::UpdateWorld: {
 		mrt::DictionarySerializator s(&message.data);
 		deserialize_slots(s);
-		float dt = (now + _net_stats.getDelta() - timestamp) / 1000.0f;
+		float dt = _net_stats.getAge(now, timestamp);
 		LOG_DEBUG(("update world, delta: %+d, dt: %g", _net_stats.getDelta(), dt));
 		int sync_id = -1;
 		if (message.has("sync"))
@@ -365,7 +365,7 @@ TRY {
 		//obj->uninterpolate();
 		obj->interpolate();
 		
-		float dt = (now + slot.net_stats.getDelta() - timestamp ) / 1000.0f; 
+		float dt = slot.net_stats.getAge(now, timestamp);
 		LOG_DEBUG(("player state %s, now: %u, timestamp: %u, delta: %+d, dt: %g", state.dump().c_str(), now, timestamp, slot.net_stats.getDelta(), dt));
 		if (dt < 0) 
 			dt = 0;
@@ -384,7 +384,7 @@ TRY {
 		mrt::Serializator s(&message.data);
 		ObjectMap updated_objects, interpolated_objects;
 
-		float dt = (now + _net_stats.getDelta() - timestamp) / 1000.0f;
+		float dt = _net_stats.getAge(now, timestamp);
 		//LOG_DEBUG(("update players, now: %d, timestamp: %d, _delta: %+d, dt: %g", now, timestamp, _net_stats.getDelta(), dt));
 		if (dt < 0) 
 			dt = 0;
@@ -543,7 +543,7 @@ TRY {
 		mrt::DictionarySerializator s(&message.data);
 		deserialize_slots(s);
 
-		float dt = (now + _net_stats.getDelta() - timestamp) / 1000.0f;
+		float dt = _net_stats.getAge(now, timestamp);
 		LOG_DEBUG(("respawn, delta: %+d, dt: %g", _net_stats.getDelta(), dt));
 	
 		World->deserializeObject(s);
@@ -551,7 +551,7 @@ TRY {
 	break;
 	}
 	case Message::GameOver: {
-		float dt = (now + _net_stats.getDelta() - timestamp) / 1000.0f;
+		float dt = _net_stats.getAge(now, timestamp);
 		LOG_DEBUG(("gameover, delta: %+d, dt: %g", _net_stats.getDelta(), dt));
 
 		TRY {
@@ -568,7 +568,7 @@ TRY {
 			PlayerSlot &slot = _players[id];
 			slot.displayTooltip(message.get("area"), message.get("message"));			
 		} else {
-			float dt = (now + _net_stats.getDelta() - timestamp) / 1000.0f;
+			float dt = _net_stats.getAge(now, timestamp);
 			LOG_DEBUG(("respawn, delta: %+d, dt: %g", _net_stats.getDelta(), dt));
 
 			TRY {

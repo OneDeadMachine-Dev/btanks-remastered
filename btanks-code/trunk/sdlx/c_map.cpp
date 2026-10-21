@@ -34,165 +34,66 @@
 
 using namespace sdlx;
 
-CollisionMap::CollisionMap() : _empty(true), _full(false), _w(0), _h(0), _data() {}
+CollisionMap::CollisionMap() : _empty(true), _full(false), _w(0), _h(0), _width(0), _data() {}
 
-
-//DO NOT USE THIS FUNCTION FOR SIGNED TYPES! :(
-template <typename T> 
-static inline const bool type_collide(T* &ptr1, const int shift1, T* &ptr2, const int shift2, const T mask = ~(T)0) {
-	const T a = (shift1 != 0)?((*ptr1++ << shift1) | (*ptr1 >> (sizeof(T) * 8 - shift1))):*ptr1++;
-	const T b = (shift2 != 0)?((*ptr2++ << shift2) | (*ptr2 >> (sizeof(T) * 8 - shift2))):*ptr2++;
-	return (mask & a & b) != 0;
-}
 
 static inline const bool bitline_collide(
  const unsigned char *base1, const int size1, const int x1, 
  const unsigned char *base2, const int size2, const int x2, 
- int line_size) {
-	if (size1 <= 0 || size2 <= 0 || line_size <= 0) 
-		return false;
-	
-	const int shift1 = x1 % 8, pos1 = x1 / 8;
-	const int shift2 = x2 % 8, pos2 = x2 / 8;
-	
-	assert((line_size - 1) / 8 + 1 <= size1);
-	assert((line_size - 1) / 8 + 1 <= size2);
-
-	unsigned int *iptr1 = (unsigned int *) (base1 + pos1);
-	unsigned int *iptr2 = (unsigned int *) (base2 + pos2);
-
-	for(; line_size >= 8 * (int)sizeof(int); line_size -= 8 * (int)sizeof(int)) {
-		if (type_collide(iptr1, shift1, iptr2, shift2))
+	int line_size) {
+	const int shift1 = x1 % 8, shift2 = x2 % 8;
+	int pos1 = x1 / 8, pos2 = x2 / 8;
+	// Read bytes rather than unaligned words. A shifted final byte may need
+	// its neighbour, but that neighbour must belong to the same mask row.
+	for (; line_size > 0; line_size -= 8, ++pos1, ++pos2) {
+		unsigned a = base1[pos1] << shift1;
+		unsigned b = base2[pos2] << shift2;
+		if (shift1 && pos1 + 1 < size1)
+			a |= base1[pos1 + 1] >> (8 - shift1);
+		if (shift2 && pos2 + 1 < size2)
+			b |= base2[pos2 + 1] >> (8 - shift2);
+		const unsigned mask = 0xffu << (8 - math::min(line_size, 8));
+		if ((a & b & mask & 0xffu) != 0)
 			return true;
 	}
-
-	Uint8 *ptr1 = (Uint8 *) iptr1;
-	Uint8 *ptr2 = (Uint8 *) iptr2;
-
-	for(; line_size >= 8 * (int)sizeof(Uint8); line_size -= 8 * (int)sizeof(Uint8)) {
-		if (type_collide(ptr1, shift1, ptr2, shift2))
-			return true;
-	}
-
-	if (line_size == 0)
-		return false; //no collision, line_size aligned by 8 bits.
-
-	const Uint8 mask = ~((1 << (8 - line_size)) - 1);
-	//LOG_DEBUG(("a: 0x%x, b: 0x%x, line_size: %d, mask: 0x%x", a, b, line_size, mask));
-	return type_collide(ptr1, shift1, ptr2, shift2, mask);
+	return false;
 }
 
 const bool CollisionMap::collides(const sdlx::Rect &src, const CollisionMap *other, const sdlx::Rect &other_src, const int bx, const int by, const bool hidden_by_other) const {
 	if (_empty || other->_empty)
 		return false;
-	
-	int aw = (src.w > 0)?src.w:(_w * 8); 
-	int ah = (src.h > 0)?src.h:_h; 
 
-	int bw = (other_src.w > 0)?other_src.w:(other->_w * 8); 
-	int bh = (other_src.h > 0)?other_src.h:other->_h; 
-	
-	int ax1 = 0 + aw - 1;
-	int ay1 = 0 + ah - 1;
-	
-	/*b - bottom right co-ordinates*/
-	int bx1 = bx + bw - 1;
-	int by1 = by + bh - 1;
-	
-	int inter_x0, inter_x1, inter_y0, inter_y1;
+	const int aw = src.w > 0 ? src.w : (int)_width;
+	const int ah = src.h > 0 ? src.h : (int)_h;
+	const int bw = other_src.w > 0 ? other_src.w : (int)other->_width;
+	const int bh = other_src.h > 0 ? other_src.h : (int)other->_h;
 
-	/*check if bounding boxes intersect*/
-	if((bx1 < 0) || (ax1 < bx) || (by1 < 0) || (ay1 < by))
+	// Clip the intersection to both source masks as well as the sprite
+	// rectangles. Padding bits and the next row are never visible pixels.
+	int x0 = math::max(math::max(0, bx), math::max(-src.x, bx - other_src.x));
+	int y0 = math::max(math::max(0, by), math::max(-src.y, by - other_src.y));
+	int x1 = math::min(math::min(aw, bx + bw),
+		math::min((int)_width - src.x, bx + (int)other->_width - other_src.x));
+	int y1 = math::min(math::min(ah, by + bh),
+		math::min((int)_h - src.y, by + (int)other->_h - other_src.y));
+	if (x0 >= x1 || y0 >= y1)
 		return false;
-
 	if (_full && other->_full)
 		return true;
 
-
-	inter_x0 = math::max(0, bx);
-	inter_x1 = math::min(ax1, bx1);
-
-	inter_y0 = math::max(0, by);
-	inter_y1 = math::min(ay1, by1);
-
-	//LOG_DEBUG(("%p->collide(%p, src:(%d, %d, %d, %d), osrc:(%d, %d, %d, %d), [%d, %d, %d, %d])", this, other, src.x, src.y, aw, ah, other_src.x, other_src.y, bw, bh, inter_x0, inter_y0, inter_y0, inter_y1));
-
-	unsigned char * restrict ptr1 = (unsigned char *) _data.get_ptr();
-	unsigned char * restrict ptr2 = (unsigned char *) other->_data.get_ptr();
-
-	int size1 = _data.get_size();
-	int size2 = other->_data.get_size();
-	
-
-//you can play with it, but 8 seems optimal for me.
-#define INTERLACE_STEP 8 
-
-#if INTERLACE_STEP == 16
-	int steps_pos[] = {0, 8, 4, 12,  2, 10, 6, 14,  1, 9, 5, 13,  3, 11, 7, 15};	
-#elif INTERLACE_STEP == 8
-	int steps_pos[] = {0, 4, 2, 6, 3, 7, 1, 5};
-#elif INTERLACE_STEP == 4
-	int steps_pos[] = {0, 2, 1, 3};
-#elif INTERLACE_STEP == 2
-	int steps_pos[] = {0, 1};
-#elif INTERLACE_STEP == 1
-	int steps_pos[] = {0};
-#endif
-
-/*	int steps = 0;
-	int steps_total = (inter_y1 - inter_y0 + 1) * (inter_x1 - inter_x0 + 1);
-*/
-#define NEW_COLLIDES
-#ifndef NEW_COLLIDES
-	for(int sy = 0; sy < INTERLACE_STEP; ++sy) 
-	for(int sx = 0; sx < INTERLACE_STEP; ++sx) 
-	for(int y = inter_y0 + steps_pos[sy]; y <= inter_y1 ; y += INTERLACE_STEP) {
-		const int ybase1 = (src.y + y) * _w;
-		const int ybase2 = (other_src.y + y - by) * other->_w;
-		for(int x = inter_x0 + steps_pos[sx]; x <= inter_x1 ; x += INTERLACE_STEP)	{
-			const int pos1 = (src.x + x) / 8 + ybase1;
-			const int pos2 = (other_src.x + x - bx) / 8 + ybase2;
-			
-			/*
-			assert(pos1 >= 0 && pos1 < size1);
-			assert(pos2 >= 0 && pos2 < size2);
-			*/ //collision detection code works in 99% cases. 
-			//this asserts above can be triggered by malicious objects (invalid rectangle returned by get_render_rect)
-			//so skip it. :)
-			if (pos1 < 0 || pos2 < 0)
-				continue;
-			
-			if (pos1 >= size1 || pos2 >= size2)
-				break;
-			
-			const unsigned char bit1 = 1<<(7 - ((x + src.x) & 7));
-			const unsigned char bit2 = 1<<(7 - ((other_src.x + x - bx) & 7));
-			
-			if ( (ptr1[pos1]&bit1) != 0 && (ptr2[pos2]&bit2) != 0) {
-				//LOG_DEBUG(("collision detected: %d of %d : %g%", steps, steps_total, 100.0 * steps / steps_total));
+	const unsigned char *ptr1 = (const unsigned char *)_data.get_ptr();
+	const unsigned char *ptr2 = (const unsigned char *)other->_data.get_ptr();
+	static const int rows[] = {0, 4, 2, 6, 3, 7, 1, 5};
+	for (int sy = 0; sy < 8; ++sy) {
+		for (int y = y0 + rows[sy]; y < y1; y += 8) {
+			if (bitline_collide(ptr1 + (src.y + y) * _w, _w, src.x + x0,
+				ptr2 + (other_src.y + y - by) * other->_w, other->_w,
+				other_src.x + x0 - bx, x1 - x0))
 				return true;
-			}
-			//++steps;
 		}
 	}
-#else
-	for(int sy = 0; sy < INTERLACE_STEP; ++sy) 
-		for(int y = inter_y0 + steps_pos[sy]; y <= inter_y1 ; y += INTERLACE_STEP) {
-			const int ybase1 = (src.y + y) * _w;
-			const int ybase2 = (other_src.y + y - by) * other->_w;
-			if (::bitline_collide(
-				ptr1 + ybase1, size1 - ybase1, src.x + inter_x0, 
-				ptr2 + ybase2, size2 - ybase2, other_src.x + inter_x0 - bx , 
-				inter_x1 - inter_x0 + 1
-				))
-				return true;
-		}
-#endif
-
-	//LOG_DEBUG(("no collision : %d steps", steps));
 	return false;
 }
-
 
 static inline const bool test_pixel(const sdlx::Surface * surface, const unsigned x, const unsigned y, const CollisionMap::Type type) {
 	Uint32 pixelcolor = surface->get_pixel(x, y);
@@ -232,8 +133,16 @@ static inline const bool test_pixel(const sdlx::Surface * surface, const unsigne
 }
 
 void CollisionMap::create(const unsigned int w, const unsigned int h, const bool bit) {
+	if (w == 0 || h == 0) {
+		_w = _h = _width = 0;
+		_empty = true;
+		_full = false;
+		_data.free();
+		return;
+	}
 	_empty = !bit;
 	_full =   bit;
+	_width = w;
 	
 	_w = (w - 1) / 8 + 1; 
 	_h = h;
@@ -244,6 +153,8 @@ void CollisionMap::create(const unsigned int w, const unsigned int h, const bool
 }
 
 bool CollisionMap::load(unsigned int w, unsigned int h, const mrt::Chunk &data) {
+	if (w == 0 || h == 0)
+		return false;
 	unsigned size = ((w - 1) / 8 + 1) * h;
 	if (size != data.get_size()) {
 		LOG_WARN(("collision data size mismatch. %ux%u = %u, got %u", w, h, size, (unsigned)data.get_size()));
@@ -253,6 +164,7 @@ bool CollisionMap::load(unsigned int w, unsigned int h, const mrt::Chunk &data) 
 	_data = data;
 	_w = (w - 1) / 8 + 1;
 	_h = h;
+	_width = w;
 
 	_empty = _full = true;
 	bool e_set = false, f_set = false;
@@ -264,7 +176,8 @@ bool CollisionMap::load(unsigned int w, unsigned int h, const mrt::Chunk &data) 
 			if (b != 0) {
 				_empty = false;
 				e_set = true;
-			} else if (b != 0xff) {
+			}
+			if (b != 0xff) {
 				_full = false;
 				f_set = true;
 			}
@@ -273,12 +186,13 @@ bool CollisionMap::load(unsigned int w, unsigned int h, const mrt::Chunk &data) 
 		}
 		unsigned w2 = w % 8;
 		if (w2 != 0) {
-			unsigned mask = ~((1 << (7 - w2)) - 1);
+			unsigned char mask = (unsigned char)(0xffu << (8 - w2));
 			unsigned char b = pdata[y * _w + x] & mask;
 			if (b != 0) {
 				_empty = false;
 				e_set = true;
-			} else if (b != mask) {
+			}
+			if (b != mask) {
 				_full = false;
 				f_set = true;
 			}
@@ -297,6 +211,7 @@ void CollisionMap::init(const sdlx::Surface * surface, const Type type) {
 	assert(surface->get_width() != 0 && surface->get_height() != 0);
 	_w = (surface->get_width() - 1) / 8 + 1;
 	_h = surface->get_height();
+	_width = surface->get_width();
 	_data.set_size(_w * _h);
 	//LOG_DEBUG(("got surface %d %d -> %d %d, allocated: %u bytes", surface->get_width(), surface->get_height(), _w, _h, (unsigned)_data.get_size()));
 	_data.fill(0);

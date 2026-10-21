@@ -108,7 +108,10 @@ void ModePanel::validate() {
 	
 	if (tdm) {
 		int t;
-		Config->get("multiplayer.teams", t, 0);
+		Config->get("multiplayer.teams", t, 2);
+		if (t < 2 || t > 4)
+			t = 2;
+		Config->set("multiplayer.teams", t);
 		for(int i = 0; i < _teams->size(); ++i) 
 			_teams->disable(i, false);
 		try {

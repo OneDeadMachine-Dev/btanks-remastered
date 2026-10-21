@@ -401,15 +401,17 @@ void PlayerSlot::spawn_player(const int slot_id, const std::string &classname_, 
 		Config->get("map.spawn-limit", spawn_limit, 0);
 		const Campaign * campaign = GameMonitor->getCampaign();
 		
-		std::string profile;
-		Config->get("engine.profile", profile, std::string());
-		if (profile.empty())
-			throw_ex(("empty profile"));
-		
-		if (campaign != NULL && Config->has("campaign." + profile + "." +  campaign->name + ".wares.additional-life.amount")) {
-			int al;
-			Config->get("campaign." + profile + "." + campaign->name + ".wares.additional-life.amount", al, 0);
-			spawn_limit += al;
+		if (campaign != NULL) {
+			std::string profile;
+			Config->get("engine.profile", profile, std::string());
+			if (profile.empty())
+				throw_ex(("empty campaign profile"));
+			const std::string key = "campaign." + profile + "." + campaign->name + ".wares.additional-life.amount";
+			if (Config->has(key)) {
+				int al;
+				Config->get(key, al, 0);
+				spawn_limit += al;
+			}
 		}
 	}
 	Object *obj = ResourceManager->createObject(classname + "(player)", animation);

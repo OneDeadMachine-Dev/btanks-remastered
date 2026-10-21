@@ -32,6 +32,7 @@ public:
 	Joystick();
 	Joystick(const int idx);
 	const bool opened() const;
+	SDL_JoystickID get_id() const;
 	void open(const int idx);
 
 	Sint16 get_axis(const int idx) const;

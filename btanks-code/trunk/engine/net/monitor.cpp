@@ -98,7 +98,7 @@ void Monitor::accept() {
 	LOG_DEBUG(("client(s) connected... [main thread context]"));
 	int id = -1;
 	try {
-	int id = PlayerManager->on_connect();
+	id = PlayerManager->on_connect();
 	LOG_DEBUG(("assigning id %d to client...", id));
 
 	{
@@ -160,6 +160,17 @@ void Monitor::add(const int id, Connection *c) {
 	sdlx::AutoMutex m(_connections_mutex);
 	delete _connections[id];
 	_connections[id] = c;
+	c->channels.clear();
+}
+
+void Monitor::bind_channel(const int id, const int channel) {
+	sdlx::AutoMutex m(_connections_mutex);
+	ConnectionMap::iterator target = _connections.find(id);
+	if (target == _connections.end())
+		return;
+	for (ConnectionMap::iterator i = _connections.begin(); i != _connections.end(); ++i)
+		i->second->channels.erase(channel);
+	target->second->channels.insert(channel);
 }
 
 const bool Monitor::active() const {
@@ -325,6 +336,10 @@ void Monitor::disconnect(const int cid) {
 		sdlx::AutoMutex m(_send_q_mutex); 
 		eraseTasks(_send_q, cid);
 	}
+	{
+		sdlx::AutoMutex m(_send_dgram_mutex);
+		eraseTasks(_send_dgram, cid);
+	}
 				
 	{
 		sdlx::AutoMutex m(_result_mutex);
@@ -336,7 +351,11 @@ void Monitor::parse(mrt::Chunk &data, const unsigned char *buf, const int r) {
 	if (r < 6) 
 		throw_ex(("packet too short (%u)", (unsigned)r));
 	
-	unsigned long len = ntohl(*((const uint32_t *)buf));
+	uint32_t encoded_length;
+	memcpy(&encoded_length, buf, sizeof(encoded_length));
+	unsigned long len = ntohl(encoded_length);
+	if (len != (unsigned)(r - 5))
+		throw_ex(("datagram length mismatch (%lu/%d)", len, r - 5));
 	if (len > 1048576)
 		throw_ex(("recv'ed packet length of %u. it seems to be far too long for regular packet (probably broken/obsoleted client)", (unsigned int)len));
 
@@ -366,16 +385,29 @@ TRY {
 	}
 	while(_running) {
 		std::set<int> cids;
+		// Keep the fd snapshot alive without holding the game thread's lock
+		// during select. Disconnect/pop may remove its Connection meanwhile.
+		std::map<int, std::shared_ptr<mrt::TCPSocket> > sockets;
 		mrt::SocketSet set; 
 		{
 			sdlx::AutoMutex m(_connections_mutex);
 			for(ConnectionMap::iterator i = _connections.begin(); i != _connections.end(); ++i) {
 				cids.insert(i->first);
+				sockets[i->first] = i->second->sock;
 				int how = mrt::SocketSet::Read | mrt::SocketSet::Exception;
-				if (findTask(_send_q, i->first) != _send_q.end()) 
-					how |= mrt::SocketSet::Write;
+				{
+					sdlx::AutoMutex sends_guard(_send_q_mutex);
+					if (findTask(_send_q, i->first) != _send_q.end())
+						how |= mrt::SocketSet::Write;
+				}
 			
-				set.add(i->second->sock, how);
+				set.add(i->second->sock.get(), how);
+			}
+			for (TaskQueue::iterator i = _recv_q.begin(); i != _recv_q.end();) {
+				if (_connections.find((*i)->id) == _connections.end()) {
+					delete *i;
+					i = _recv_q.erase(i);
+				} else ++i;
 			}
 		}
 
@@ -404,85 +436,72 @@ TRY {
 		}
 			
 		if (_dgram_sock != NULL && set.check(_dgram_sock, mrt::SocketSet::Read)) {
-			unsigned char buf[1500]; //fixme
+			unsigned char buf[1500];
 			mrt::Socket::addr addr;
 			int r = _dgram_sock->recv(addr, buf, sizeof(buf));
-			//LOG_DEBUG(("recv() == %d", r));
-			//if (r > 5) {
 			TRY {
-				sdlx::AutoMutex m(_connections_mutex);
-				ConnectionMap::iterator i;
-				for(i = _connections.begin(); i != _connections.end(); ++i) {
-					//fixme: translate remote udp socket to connection id ! 
-					if (addr.ip == i->second->sock->getAddress().ip) 
-						break;
-				}
-				if (i != _connections.end()) {
-					//update udp connection status. 
-					i->second->addr = addr;
-				
-					m.unlock();
-	
-					Task * t = NULL;
-					TRY {
-						t = new Task(i->first);
-					
-						parse(t->data, buf, r);
-					} CATCH("processing datagram", {
-						delete t;
-						t = NULL;
-						throw;
-					});
-					t->len = t->data.get_size();
-					
-					//LOG_DEBUG(("recv(%d, %u)", t->id, (unsigned)t->data->get_size()));
-
-					sdlx::AutoMutex m2(_result_dgram_mutex);
-					_result_q_dgram.push_back(t);
-				} else {
-					bool ok = false;
-
-					TRY {
-						mrt::Chunk data;
-						parse(data, buf, r);
-
-						Message msg;
-						msg.deserialize2(data);
-						if (msg.type != Message::ServerDiscovery) 
-							throw_ex(("wrong message type: %s", msg.getType()));
-
-						ok = true;
-						LOG_DEBUG(("server discovery datagram from the %s", addr.getAddr().c_str()));
-						unsigned t0;
-						{
-							mrt::Serializator in(&msg.data);
-							in.get(t0);
+				mrt::Chunk data;
+				parse(data, buf, r);
+				Message msg;
+				msg.deserialize2(data);
+				sdlx::AutoMutex connections_guard(_connections_mutex);
+				ConnectionMap::iterator match = _connections.end();
+				if (msg.type != Message::ServerDiscovery) {
+					// Prefer a learned UDP endpoint, then a channel assigned over
+					// TCP. Never pick the first of several peers sharing an IP.
+					for (ConnectionMap::iterator i = _connections.begin(); i != _connections.end(); ++i) {
+						if (addr.ip != i->second->sock->getAddress().ip)
+							continue;
+						if (!i->second->addr.empty() && i->second->addr.ip == addr.ip && i->second->addr.port == addr.port) {
+							match = i;
+							break;
 						}
-						mrt::Serializator out;
-							
-						out.add(t0);
-						out.add((unsigned)PlayerManager->get_free_slots_count());
-						out.add((unsigned)PlayerManager->get_slots_count());
-						out.add((int)RTConfig->game_type);
-						out.finalize(msg.data);
-						msg.set("map", Map->getName());
-							
-						msg.serialize2(data);
-						mrt::Chunk result;
-						pack(result, data, _comp_level);
-						r = _dgram_sock->send(addr, result.get_ptr(), result.get_size()); //returning same message
-						LOG_DEBUG(("send(%u) returned %d", (unsigned)result.get_size(), r));
-					} CATCH("discovery message", {});
-					if (!ok) {
-						LOG_WARN(("incoming datagram from unknown client (%s)", addr.getAddr().c_str()));
+					}
+					if (match == _connections.end() && _server_sock != NULL && msg.channel >= 0) {
+						for (ConnectionMap::iterator i = _connections.begin(); i != _connections.end(); ++i) {
+							if (addr.ip == i->second->sock->getAddress().ip && i->second->channels.count(msg.channel)) {
+								match = i;
+								break;
+							}
+						}
+					}
+					if (match == _connections.end()) {
+						for (ConnectionMap::iterator i = _connections.begin(); i != _connections.end(); ++i) {
+							if (addr.ip != i->second->sock->getAddress().ip)
+								continue;
+							if (match != _connections.end()) { match = _connections.end(); break; }
+							match = i;
+						}
 					}
 				}
+				if (match != _connections.end()) {
+					match->second->addr = addr;
+					Task *task = new Task(match->first, data);
+					sdlx::AutoMutex m(_result_dgram_mutex);
+					_result_q_dgram.push_back(task);
+				} else if (msg.type == Message::ServerDiscovery && _server_sock != NULL) {
+					unsigned t0;
+					{
+						mrt::Serializator in(&msg.data);
+						in.get(t0);
+					}
+					mrt::Serializator out;
+					out.add(t0);
+					out.add((unsigned)PlayerManager->get_free_slots_count());
+					out.add((unsigned)PlayerManager->get_slots_count());
+					out.add((int)RTConfig->game_type);
+					out.finalize(msg.data);
+					msg.set("map", Map->getName());
+					msg.serialize2(data);
+					mrt::Chunk result;
+					pack(result, data, _comp_level);
+					_dgram_sock->send(addr, result.get_ptr(), result.get_size());
+				} else {
+					LOG_DEBUG(("dropping unassociated datagram from %s", addr.getAddr().c_str()));
+				}
 			} CATCH("datagram", {})
-			/*} else {
-				LOG_WARN(("short datagram recv-ed [%d]", r));
-			}*/
 		}
-		
+
 		if (_dgram_sock != NULL && set.check(_dgram_sock, mrt::SocketSet::Write)) {
 			Task *task = NULL;
 			{
@@ -518,7 +537,9 @@ TRY {
 				ConnectionMap::const_iterator i = _connections.find(cid);
 				if (i == _connections.end())
 					continue;
-				sock = i->second->sock;
+				if (i->second->sock != sockets[cid])
+					continue;
+				sock = sockets[cid].get();
 			}
 			
 			if (set.check(sock, mrt::SocketSet::Exception)) {
@@ -591,13 +612,11 @@ TRY {
 
 					int estimate = t->len - t->pos;
 					assert(estimate > 0);
-					m.unlock();
 					int r = sock->send((char *)(t->data.get_ptr()) + t->pos, estimate);
 					if (r == -1 || r == 0) {
 						LOG_ERROR(("error while reading %u bytes (r = %d)", estimate, r));
 						goto disconnect;
 					}
-					m.lock();
 
 					t->pos += r;
 					assert(t->pos <= t->len);

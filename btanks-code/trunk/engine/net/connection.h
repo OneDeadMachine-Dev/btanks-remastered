@@ -30,6 +30,8 @@
 
 
 #include "mrt/sys_socket.h"
+#include <set>
+#include <memory>
 
 namespace mrt  {
 	class TCPSocket;
@@ -40,8 +42,9 @@ public:
 	Connection(mrt::TCPSocket *s);
 	~Connection();
 		
-	mrt::TCPSocket * sock;
+	std::shared_ptr<mrt::TCPSocket> sock;
 	mrt::Socket::addr addr;
+	std::set<int> channels;
 	//int last_message_ts, last_my_ts, delta;
 private: 
 	Connection(const Connection &);
