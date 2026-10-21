@@ -1,0 +1,40 @@
+name: Bug report / Ошибка
+description: Report a reproducible game, input, build or saving problem.
+title: "[Bug] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / Что произошло?
+      description: Include the map, mode and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Как повторить
+      description: Number the steps and say whether this happens every time.
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Build / Сборка
+      options:
+        - Native macOS
+        - Web / browser
+        - Other / historical platform
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, CPU and browser / ОС, процессор и браузер
+      description: Include the game revision if known.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots or recording / Доказательства
+      description: Remove private profile data and personal paths before uploading logs.

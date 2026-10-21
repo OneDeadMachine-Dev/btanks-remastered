@@ -1,0 +1,51 @@
+name: Build and checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation:
+    name: Repository documentation
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: python3 scripts/check-docs.py
+      - run: git diff --check
+
+  native:
+    name: macOS arm64 build and regressions
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Install native dependencies
+        run: brew install sdl3 libvorbis expat scons pkgconf
+      - name: Build
+        run: ./build-mac.sh
+      - name: Component regressions with disposable state
+        run: ./tests/run-regressions.sh
+
+  web:
+    name: WebAssembly compile
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Install Web toolchain
+        run: brew install emscripten cmake ninja
+      - name: Compile Web build
+        run: ./make-web.sh

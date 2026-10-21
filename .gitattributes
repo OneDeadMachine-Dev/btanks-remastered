@@ -1,0 +1,20 @@
+# Keep new repository documentation portable without normalizing legacy code.
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ogg binary
+*.icns binary
+btanks-code/trunk/data/**/*.map binary
+
+# Development-only material does not belong in source release archives.
+**/.svn/** export-ignore
+docs/evidence/** export-ignore
+.claude/** export-ignore
+
+# Preserve the original license bytes, including historical CRLF and spacing.
+LICENSE -text -whitespace
+LICENSE.EXCEPTION -text -whitespace

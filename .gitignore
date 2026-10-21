@@ -29,3 +29,14 @@ bt_frame_*.bmp
 
 # web build
 build-web/
+
+# local assistant/browser settings and diagnostic state
+.claude/
+.playwright-cli/
+output/playwright/
+
+# Raw machine-specific evidence stays local; portable summaries are public.
+docs/evidence/
+docs/BUG_AUDIT.md
+docs/REPAIRS.md
+docs/VALIDATION.md

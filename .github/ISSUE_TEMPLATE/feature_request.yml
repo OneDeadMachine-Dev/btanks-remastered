@@ -1,0 +1,23 @@
+name: Idea / Предложение
+description: Suggest a focused improvement while keeping the original game's character.
+title: "[Idea] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What would this improve? / Что это улучшит?
+      description: Describe the player's problem or the development task.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / Предлагаемое поведение
+      description: Explain how it should work, with examples if useful.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and references / Альтернативы и примеры
+      description: Credit the authors and license of any proposed assets or borrowed code.
