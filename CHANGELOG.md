@@ -8,7 +8,7 @@ This file tracks the modern remaster. Historical upstream changes remain in [the
 
 - Russian and English introductions, the maintainer's childhood story, original-team credits and actual game screenshots.
 - Build, testing, contribution and publishing guides; preserved root license texts and a dependency-notice index.
-- GitHub issue/PR templates and a macOS/Web build workflow. Hosted CI results will be available after the repository is published and the workflow runs.
+- GitHub issue/PR templates and a macOS/Web build workflow; current results are linked from the README badge.
 - Exclusion of local tooling, audit artifacts and SVN working-copy metadata from the current tracked tree.
 
 ### Repairs verified on 21 October 2026
@@ -23,6 +23,7 @@ This file tracks the modern remaster. Historical upstream changes remain in [the
 - Float positive exponents and aligned integer serialization.
 - Pending world commands and detached objects discarded when changing maps.
 - SCons debug arguments, invalid FPS-limit fallback and consistent native/Web version strings.
+- Server-discovery map assignment compatibility with the libc++ shipped in Xcode 16.4.
 
 ### Modern port, October 2026
 

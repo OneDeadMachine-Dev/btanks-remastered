@@ -24,7 +24,7 @@ public:
 		
 		Host() : name(), map(), ping(0), players(0), slots(0), game_type(GameTypeDeathMatch) {}
 	};
-	typedef std::map<const mrt::Socket::addr, Host> HostMap;
+	typedef std::map<mrt::Socket::addr, Host> HostMap;
 	
 	Scanner(); 
 	~Scanner();
