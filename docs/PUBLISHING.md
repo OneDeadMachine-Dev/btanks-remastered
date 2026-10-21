@@ -8,7 +8,7 @@ Public source repository: **[OneDeadMachine-Dev/btanks-remastered](https://githu
 - **Description:** A childhood favorite, brought back to modern macOS and the browser. An SDL3/WebAssembly remaster of Battle Tanks with original-team credits preserved.
 - **Topics:** `battle-tanks`, `btanks`, `game-preservation`, `retrogaming`, `cpp`, `sdl3`, `macos`, `webassembly`, `webgl2`, `open-source-game`
 - **Website:** leave unset until a real demo or project site is published.
-- **Social preview:** use `docs/images/curfew.png`, an actual 1280×720 game screenshot, with its artwork attribution retained in the repository.
+- **Social preview:** use `docs/images/social-preview.jpg`, the original game splash artwork, with its attribution retained in the repository.
 
 The primary README is Russian; [README.en.md](../README.en.md) provides the English version. Both carry the same childhood story, platform scope and original credits.
 
